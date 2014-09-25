@@ -1,0 +1,13 @@
+<h1>_{MsgHello} Meh
+
+<ol>
+  <li> Here's a bunch of data for an individual user.
+  <li> item!
+  <li> item!
+  <li> item!
+  <li> item!
+  <li> item!
+
+^{formWidget}
+<a href="#{googlink}">google 
+<p><a href=@{HomeR}>maine paige
