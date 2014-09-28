@@ -41,22 +41,19 @@ sampleForm = renderDivs $ (,)
 
 -}
 
-sampleForm :: Form (FileInfo, Text)
-sampleForm = renderDivs $ (,)
-    <$> fileAFormReq "Choose a file"
-    <*> areq textField "What's on the file?" Nothing
-
 getUsersR :: Handler Html
 getUsersR = do
-    (formWidget, formEnctype) <- generateFormPost sampleForm
-    let submission = Nothing :: Maybe (FileInfo, Text)
-        handlerName = "getUsersR" :: Text
-        googlink = "https://www.google.com" :: Text
-        itemz = [0..10] :: [Int]
-    defaultLayout $ do
-        aDomId <- newIdent
-        setTitle "Welcome To Userz!"
-        $(widgetFile "users")
+  -- (formWidget, formEnctype) <- generateFormPost sampleForm
+  --results <- selectList [UserIdent ==. "meh"] [] :: [Entity User] 
+  -- results <- selectList [UserIdent ==. "meh"] [] :: HandlerT App IO [Entity User] 
+  -- results <- runDB $ selectList [UserIdent ==. "meh"] [] :: [Entity User] 
+  theUsers <- runDB $ selectList [] [] 
+  -- results <- runDB $ selectList [UserIdent ==. "meh"] [] 
+  --liftIO $ print (results :: [Entity User])
+  defaultLayout $ do
+      aDomId <- newIdent
+      setTitle "Welcome To Userz!"
+      $(widgetFile "users")
 
 
 data Usah = Usah
@@ -123,7 +120,9 @@ postUserR :: Handler Html
 postUserR = do
     ((result, formWidget), formEnctype) <- runFormPost userForm
     case result of 
-      FormSuccess user -> defaultLayout [whamlet|<p>#{show user}|]
+      FormSuccess user -> do
+        
+        defaultLayout [whamlet|<p>#{show user}|]
       _ -> defaultLayout [whamlet|Invalid|]
 
 

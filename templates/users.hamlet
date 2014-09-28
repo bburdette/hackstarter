@@ -4,11 +4,8 @@
   <li>This is where a list of users would go, if I knew how to do that!#
       This is the second line.
   <li> This is the actual second line.
-  <li> _{handlerName}
-  $forall item <- itemz 
-    <li> #{item}
-  
+  $forall Entity usrId usr <- theUsers 
+    <li> #{userIdent usr}
 
-^{formWidget}
-<a href="#{googlink}">google 
+<!-- <a href="#{googlink}">google -->
 <p><a href=@{HomeR}>maine paige
