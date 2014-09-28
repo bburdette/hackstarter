@@ -8,3 +8,4 @@
 /users/ UsersR GET
 /usah/ UsahR GET POST
 /user/ UserR GET POST
+/adduser AddUserR GET POST
