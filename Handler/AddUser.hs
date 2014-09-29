@@ -11,9 +11,10 @@ getAddUserR :: Handler Html
 getAddUserR = do
   (userWidget, enctype) <- generateFormPost newUserForm
   defaultLayout $ [whamlet|
+    <h2> Add a new user:
     <form method=post enctype=#(enctype}>
       ^{userWidget}
-      <input type=submit value=blah>|]
+      <input type=submit value=add user>|]
 
 postAddUserR :: Handler Html
 postAddUserR = do
@@ -21,5 +22,8 @@ postAddUserR = do
   case res of
     FormSuccess user -> do
       usarID <- runDB $ insert user 
-      defaultLayout [whamlet|added user record with id: #{(show usarID)}|]
+      defaultLayout [whamlet|
+          added user record with id: #{(show usarID)}
+          <br> <a href=@{UsersR}> Users 
+          |]
     _ -> defaultLayout [whamlet|fale|] 
