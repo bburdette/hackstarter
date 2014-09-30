@@ -5,8 +5,6 @@
   $forall Entity usrId usr <- theUsers 
     <li> #{userIdent usr} with record id: #{show usrId}
 
-<br>mah session: #{show sess} <br>
-
 <a href=@{AddUserR}> Add a user
 <!-- <a href="#{googlink}">google -->
 <p><a href=@{HomeR}>maine paige

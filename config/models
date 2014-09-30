@@ -8,5 +8,16 @@ Email
     user UserId Maybe
     verkey Text Maybe
     UniqueEmail email
+Project
+    name Text
+    description Text Maybe
+Link
+   fromproj ProjectId
+   toproj ProjectId
+
+--LinkTypes
+--  type - depends, 
+   
+
 
  -- By default this file is used in Model.hs (which is imported by Foundation.hs)
