@@ -18,8 +18,19 @@ getProjectR projid = do
       defaultLayout $ do
         [whamlet|
           <h2>Maintain a record!
-          ^{projWidget}
+          <form method=post enctype=#{enctype}> 
+            ^{projWidget}
+            <input type=submit value="save changes">
           |]
    
 postProjectR :: ProjectId -> Handler Html
-postProjectR = error "Not yet implemented: postProjectR"
+postProjectR projid = let dummy = Project "" Nothing in
+  do 
+    ((res, projWidget), enctype) <- runFormPost (projectForm dummy)
+    case res of 
+      FormSuccess proj -> do 
+        result <- runDB $ replace projid proj
+        defaultLayout $ [whamlet|project update attempted.  result: #{show result}|]
+      _ -> error "there was an error"
+
+
