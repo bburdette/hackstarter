@@ -9,7 +9,8 @@ getProjectsR = do
     <h2>You are in the Projects:
     <ul>
     $forall Entity projId proj <- projs
-      <li> #{projectName proj}
+      <li> <a href=@{ProjectR projId}> #{projectName proj}
+    <br>
     <a href=@{AddProjectR}>add new project
     |]
 
