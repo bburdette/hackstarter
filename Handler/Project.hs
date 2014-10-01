@@ -28,7 +28,7 @@ getProjectR projid = do
     Just proj -> do 
       (projWidget, enctype) <- generateFormPost $ identifyForm "proj" (projectForm proj)
       (linkWidget, enctype) <- generateFormPost $ identifyForm "link" linkToForm 
-      links <- runDB $ selectList [] []
+      links <- runDB $ selectList [LinkFromproj ==. projid] []
       defaultLayout $ do
         [whamlet|
           <h2>Maintain a record!
@@ -59,9 +59,9 @@ postProjectR projid = let dummy = Project "" Nothing in
             project update attempted.  result: #{show result}
             <br> <a href=@{ProjectsR}> Back to projects
             |]
-      -- FormFailure errors ->  error $ foldr T.append (T.pack "there was errors in teh projform! ") (map T.pack errors)
-      FormFailure errors ->  error $ foldr (++) "there was errors in teh projform! " (map T.unpack errors)
+      FormFailure errors ->  error $ foldl (++) "there was errors in teh projform! " (map T.unpack errors)
       FormMissing ->
+        -- no project form data.  maybe there's link form data?
         case resLink of 
           FormSuccess linktoform -> do
             mbproj <- runDB $ selectFirst [ ProjectName ==. (toField linktoform)] []
