@@ -35,7 +35,7 @@ getProjectR projid = do
           E.on $ link ^. LinkFromproj E.==. (E.val projid) 
             E.&&. project ^. ProjectId E.==. link ^. LinkToproj 
           return 
-            ( link ^. LinkFromproj, link ^. LinkToproj, project ^. ProjectName ) 
+            ( link ^. LinkToproj, project ^. ProjectName ) 
       defaultLayout $ do
         [whamlet|
           <h2>Maintain a record!
@@ -45,8 +45,10 @@ getProjectR projid = do
           <hr>
           <h3>Dependencies
           <ul>
-            $forall item <- namedlinks
-              <li> Linked item: #{show item}
+          $forall (E.Value projkey, E.Value projname) <- namedlinks
+            <li> 
+              <a href=@{ProjectR projkey}> #{projname} 
+              blah
           <hr>
           <h3>Add dependency
           <form method=post enctype=#{enctype}>
