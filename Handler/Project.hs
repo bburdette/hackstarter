@@ -2,6 +2,8 @@ module Handler.Project where
 
 import Import
 import qualified Data.Text as T
+import qualified Database.Esqueleto      as E
+import           Database.Esqueleto      ((^.))
 
 projectForm :: Project -> Form Project
 projectForm proj = renderDivs $ Project
@@ -28,7 +30,12 @@ getProjectR projid = do
     Just proj -> do 
       (projWidget, enctype) <- generateFormPost $ identifyForm "proj" (projectForm proj)
       (linkWidget, enctype) <- generateFormPost $ identifyForm "link" linkToForm 
-      links <- runDB $ selectList [LinkFromproj ==. projid] []
+      namedlinks <- runDB $ E.select 
+        $ E.from $ \(E.InnerJoin link project) -> do 
+          E.on $ link ^. LinkFromproj E.==. (E.val projid) 
+            E.&&. project ^. ProjectId E.==. link ^. LinkToproj 
+          return 
+            ( link ^. LinkFromproj, link ^. LinkToproj, project ^. ProjectName ) 
       defaultLayout $ do
         [whamlet|
           <h2>Maintain a record!
@@ -38,8 +45,8 @@ getProjectR projid = do
           <hr>
           <h3>Dependencies
           <ul>
-            $forall Entity linkid link <- links
-              <li> Linked item: #{show (linkFromproj link)}
+            $forall item <- namedlinks
+              <li> Linked item: #{show item}
           <hr>
           <h3>Add dependency
           <form method=post enctype=#{enctype}>
@@ -50,8 +57,10 @@ getProjectR projid = do
 postProjectR :: ProjectId -> Handler Html
 postProjectR projid = let dummy = Project "" Nothing in
   do 
-    ((resProj, projWidget), enctype) <- runFormPost $ identifyForm "proj" (projectForm dummy)
-    ((resLink, linkWidget), enctype) <- runFormPost $ identifyForm "link" linkToForm 
+    ((resProj, projWidget), enctype) <- 
+        runFormPost $ identifyForm "proj" (projectForm dummy)
+    ((resLink, linkWidget), enctype) <- 
+        runFormPost $ identifyForm "link" linkToForm 
     case resProj of 
       FormSuccess proj -> do 
         result <- runDB $ replace projid proj
