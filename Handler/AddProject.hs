@@ -22,8 +22,6 @@ postAddProjectR = do
   case res of 
     FormSuccess proj -> do
       projID <- runDB $ insert proj
-      defaultLayout [whamlet|
-        added project "#{projectName proj}" with ID: #{show projID}
-        |]
+      redirect ProjectsR
     _ -> defaultLayout [whamlet|fale!|]
 

@@ -12,6 +12,8 @@ getProjectsR = do
       <li> <a href=@{ProjectR projId}> #{projectName proj}
     <br>
     <a href=@{AddProjectR}>add new project
+    <br>
+    <a href=@{HomeR}>maine paige
     |]
 
 postProjectsR :: Handler Html

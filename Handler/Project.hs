@@ -17,11 +17,6 @@ linkToForm :: Form LinkTo
 linkToForm = renderDivs $ LinkTo
   <$> areq textField "project name: " Nothing
 
--- linkForm :: Form Link
--- linkForm = renderDivs $ Link
---   <$> areq intField "from" Nothing
---   <*> areq intField "to" Nothing 
-
 getProjectR :: ProjectId -> Handler Html
 getProjectR projid = do
   mbproj <- runDB $ get projid 
