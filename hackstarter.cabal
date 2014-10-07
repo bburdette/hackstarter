@@ -25,6 +25,7 @@ library
                      Handler.Projects
                      Handler.AddProject
                      Handler.Project
+                     Handler.User
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

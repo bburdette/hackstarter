@@ -6,8 +6,8 @@
 
 / HomeR GET POST
 /users/ UsersR GET
-/user/ UserR GET POST
 /adduser AddUserR GET POST
 /projects ProjectsR GET POST
 /addproject AddProjectR GET POST
 /project/#ProjectId ProjectR GET POST
+/user/#UserId UserR GET POST

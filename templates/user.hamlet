@@ -1,13 +1,5 @@
-<h1>_{MsgHello} Meh
-
-<ol>
-  <li> Here's a bunch of data for an individual user.
-  <li> item!
-  <li> item!
-  <li> item!
-  <li> item!
-  <li> item!
-
-^{formWidget}
-<a href="#{googlink}">google 
-<p><a href=@{HomeR}>maine paige
+<h1> User Maintenance
+<form method=post enctype=#{formEnctype}>
+  ^{formWidget}
+  <input type=submit value="save changes">
+<p><a href=@{HomeR}>main page

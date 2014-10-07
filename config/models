@@ -12,13 +12,10 @@ Project
     name Text
     description Text Maybe
 Link
-  fromproj ProjectId
-  toproj ProjectId
-  UniqueLink fromproj toproj
-   
+    fromproj ProjectId
+    toproj ProjectId
+    UniqueLink fromproj toproj
 
---LinkTypes
---  type - depends, 
    
 
 
