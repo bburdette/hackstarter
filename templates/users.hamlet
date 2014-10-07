@@ -1,13 +1,14 @@
 <h1>_{MsgHello} Meh
 
-<h2> its a list of users!
+<h2> SSD Hackers 
 <ol> 
   $forall Entity usrId usr <- theUsers 
-    <li> #{userIdent usr} with record id: #{show usrId}
+    <li> 
+      <a href=@{UserR usrId}> #{userIdent usr} 
 
-<br>mah session: #{show sess} <br>
 
 <a href=@{AddUserR}> Add a user
+<!-- <br>mah session: #{show sess} <br> -->
 <!-- <a href="#{googlink}">google -->
 <br>
-<a href=@{HomeR}>main paige
+<a href=@{HomeR}>main page
