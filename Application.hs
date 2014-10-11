@@ -33,6 +33,8 @@ import Handler.Projects
 import Handler.AddProject
 import Handler.Project
 import Handler.User
+import Handler.DuesRates
+import Handler.AddDuesRate
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the

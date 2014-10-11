@@ -26,6 +26,8 @@ library
                      Handler.AddProject
                      Handler.Project
                      Handler.User
+                     Handler.DuesRates
+                     Handler.AddDuesRate
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

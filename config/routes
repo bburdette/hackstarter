@@ -11,3 +11,5 @@
 /addproject AddProjectR GET POST
 /project/#ProjectId ProjectR GET POST
 /user/#UserId UserR GET POST
+/duesrates/ DuesRatesR GET POST
+/addduesrate/ AddDuesRateR GET POST

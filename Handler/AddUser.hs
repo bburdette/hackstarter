@@ -12,7 +12,7 @@ getAddUserR = do
   (userWidget, enctype) <- generateFormPost newUserForm
   defaultLayout $ [whamlet|
     <h2> Add a new user:
-    <form method=post enctype=#(enctype}>
+    <form method=post enctype=#{enctype}>
       ^{userWidget}
       <input type=submit value=add user>|]
 

@@ -15,7 +15,16 @@ Link
     fromproj ProjectId
     toproj ProjectId
     UniqueLink fromproj toproj
-
+DuesRate
+    name Text
+    amount Int
+UserDuesRate
+    user UserId
+    duesrate DuesRateId
+DuesPaid
+    user UserId
+    amount Int
+    date
    
 
 
