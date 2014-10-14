@@ -1,6 +1,7 @@
 User
     ident Text
     password Text Maybe
+    duesrate DuesRateId
     UniqueUser ident
     deriving Typeable Show
 Email
@@ -18,13 +19,11 @@ Link
 DuesRate
     name Text
     amount Int
-UserDuesRate
-    user UserId
-    duesrate DuesRateId
 DuesPaid
     user UserId
     amount Int
-    date
+    date UTCTime default=CURRENT_TIME
+
    
 
 

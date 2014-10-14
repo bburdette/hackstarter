@@ -2,31 +2,42 @@ module Handler.User where
 
 import Import
 
-userForm :: User -> Form User 
-userForm user = renderDivs $ User 
-  <$> areq textField "name" (Just (userIdent user)) 
-  <*> aopt passwordField "Pwd" (Just (userPassword user))
+getDuesRates :: HandlerT App IO [Entity DuesRate] 
+getDuesRates = do
+  blah <- runDB $ selectList [] []
+  return blah
+
+drList :: [(Entity DuesRate)] -> [(Text, Key DuesRate)]
+drList = fmap (\(Entity blah vole) -> (duesRateName vole, blah))
+
+userForm :: [(Text, Key DuesRate)] -> Maybe User -> Form User 
+userForm duesrates user = renderDivs $ User 
+  <$> areq textField "name" (userIdent <$> user)
+  <*> aopt passwordField "Pwd" (userPassword <$> user)
+  <*> areq (selectFieldList duesrates) "Dues rate" (userDuesrate <$> user)
+
 
 getUserR :: UserId -> Handler Html
 getUserR userId = do
   mbUser <- runDB $ get userId
+  duesrates <- getDuesRates
   case mbUser of 
     Nothing -> error "nothing"
     Just userRec -> do 
-      (formWidget, formEnctype) <- generateFormPost (userForm userRec)
+      (formWidget, formEnctype) <- generateFormPost (userForm (drList duesrates) (Just userRec))
       defaultLayout $ do 
         $(widgetFile "user")
-      -- defaultLayout $ [whamlet| ^{formWidget}|]
 
 postUserR :: UserId -> Handler Html
 postUserR uid = 
-  let dummyuser = User "" Nothing in 
     do
-      ((result, formWidget), formEnctype) <- runFormPost (userForm dummyuser)   
+      duesrates <- getDuesRates
+      ((result, formWidget), formEnctype) 
+          <- runFormPost 
+              (userForm (drList duesrates) Nothing)   
       case result of
         FormSuccess user -> do 
           runDB $ replace uid user  
           redirect UsersR
         _ -> error "user update fail"
-
 
