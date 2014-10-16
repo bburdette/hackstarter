@@ -42,10 +42,10 @@ postUserR uid =
     do
       duesrates <- getDuesRates
       ((u_result, formWidget), formEnctype) 
-          <- runFormPost 
-              (userForm (drList duesrates) Nothing)   
+          <- runFormPost $
+              identifyForm "user" (userForm (drList duesrates) Nothing)   
       ((w_result, wutWidget), formEnctype) 
-          <- runFormPost (mehForm "yep")
+          <- runFormPost $ identifyForm "wut" (mehForm "yep")
       case u_result of
         FormSuccess user -> do 
           runDB $ replace uid user  
