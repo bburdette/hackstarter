@@ -10,7 +10,7 @@ getDuesRates = do
 drList :: [(Entity DuesRate)] -> [(Text, Key DuesRate)]
 drList = fmap (\(Entity blah vole) -> (duesRateName vole, blah))
 
--- newUserForm :: Form User
+newUserForm :: [(Text, Key DuesRate)] -> Form User 
 newUserForm duesrates = renderDivs $ User
  <$> areq textField "User ID" Nothing
  <*> aopt passwordField "Password" Nothing 

@@ -16,15 +16,24 @@ userForm duesrates user = renderDivs $ User
   <*> aopt passwordField "Pwd" (userPassword <$> user)
   <*> areq (selectFieldList duesrates) "Dues rate" (userDuesrate <$> user)
 
+data Meh = Meh { 
+  wut :: String
+  } 
+  deriving Show
+
+mehForm :: String -> Form Meh
+mehForm wutt = renderDivs $ Meh 
+  <$> pure wutt
 
 getUserR :: UserId -> Handler Html
 getUserR userId = do
   mbUser <- runDB $ get userId
   duesrates <- getDuesRates
   case mbUser of 
-    Nothing -> error "nothing"
+    Nothing -> error "user id not found."
     Just userRec -> do 
-      (formWidget, formEnctype) <- generateFormPost (userForm (drList duesrates) (Just userRec))
+      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userForm (drList duesrates) (Just userRec))
+      (wutWidget, formEnctypee) <- generateFormPost $ identifyForm "wut" $ (mehForm "nope") 
       defaultLayout $ do 
         $(widgetFile "user")
 
@@ -32,12 +41,20 @@ postUserR :: UserId -> Handler Html
 postUserR uid = 
     do
       duesrates <- getDuesRates
-      ((result, formWidget), formEnctype) 
+      ((u_result, formWidget), formEnctype) 
           <- runFormPost 
               (userForm (drList duesrates) Nothing)   
-      case result of
+      ((w_result, wutWidget), formEnctype) 
+          <- runFormPost (mehForm "yep")
+      case u_result of
         FormSuccess user -> do 
           runDB $ replace uid user  
           redirect UsersR
-        _ -> error "user update fail"
+        _ -> 
+          case w_result of 
+            FormSuccess meh -> do
+              runDB $ delete uid
+              defaultLayout [whamlet| record deleted. #{show w_result}|]
+            _ -> error "error"
+               
 

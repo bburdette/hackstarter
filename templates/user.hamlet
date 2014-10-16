@@ -1,5 +1,14 @@
 <h1> User Maintenance
 <form method=post enctype=#{formEnctype}>
   ^{formWidget}
-  <input type=submit value="save changes">
+  <input type=submit name="save" value="save changes">
+  <input type=submit name="delete" value="delete user">
+
+<form method=post enctype=#{formEnctype}>
+  ^{wutWidget}
+  <input type=submit value="yeah delete">
+
+<form method=post enctype=#{formEnctype}>
+  <input type=submit value="delete user">
+
 <p><a href=@{HomeR}>main page
