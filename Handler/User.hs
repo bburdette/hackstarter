@@ -50,8 +50,6 @@ postUserR uid =
           <- runFormPost $ identifyForm "wut" (mehForm "yep")
       case u_result of
         FormSuccess user -> do 
-          -- error $ show formWidget
-          -- (pp, ffdsf) <- runRequestBody
           del <- lookupPostParam "delete"
           sav <- lookupPostParam "save"
           case (del, sav) of 
