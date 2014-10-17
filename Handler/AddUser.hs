@@ -1,25 +1,12 @@
 module Handler.AddUser where
 
 import Import
-
-getDuesRates :: HandlerT App IO [Entity DuesRate] 
-getDuesRates = do
-  blah <- runDB $ selectList [] []
-  return blah
-
-drList :: [(Entity DuesRate)] -> [(Text, Key DuesRate)]
-drList = fmap (\(Entity blah vole) -> (duesRateName vole, blah))
-
-newUserForm :: [(Text, Key DuesRate)] -> Form User 
-newUserForm duesrates = renderDivs $ User
- <$> areq textField "User ID" Nothing
- <*> aopt passwordField "Password" Nothing 
- <*> areq (selectFieldList duesrates) "Dues rate" Nothing
+import UserForm
 
 getAddUserR :: Handler Html
 getAddUserR = do
   drs <- getDuesRates
-  (userWidget, enctype) <- generateFormPost (newUserForm (drList drs))
+  (userWidget, enctype) <- generateFormPost (userForm (drList drs) Nothing)
   defaultLayout $ [whamlet|
     <h2> Add a new user:
     <form method=post enctype=#{enctype}>
@@ -29,7 +16,7 @@ getAddUserR = do
 postAddUserR :: Handler Html
 postAddUserR = do
   drs <- getDuesRates
-  ((res, userWidget),enctype) <- runFormPost (newUserForm (drList drs))
+  ((res, userWidget),enctype) <- runFormPost (userForm (drList drs) Nothing)
   case res of
     FormSuccess user -> do
       usarID <- runDB $ insert user 

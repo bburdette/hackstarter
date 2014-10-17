@@ -16,6 +16,7 @@ library
                      Foundation
                      Import
                      Model
+                     UserForm
                      Settings
                      Settings.StaticFiles
                      Settings.Development
