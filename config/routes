@@ -13,3 +13,4 @@
 /user/#UserId UserR GET POST
 /duesrates/ DuesRatesR GET POST
 /addduesrate/ AddDuesRateR GET POST
+/duesrate/#DuesRateId DuesRateR GET POST

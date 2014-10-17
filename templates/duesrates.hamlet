@@ -3,7 +3,8 @@
 <h2> SSD dues rates 
 <ul> 
   $forall Entity duesRateId duesRate <- theRates
-    <li> #{duesRateName duesRate} #{duesRateAmount duesRate}
+    <li> 
+      <a href=@{DuesRateR duesRateId}> #{duesRateName duesRate} #{duesRateAmount duesRate}
 
 <a href=@{AddDuesRateR}> Add a rate
 <br>

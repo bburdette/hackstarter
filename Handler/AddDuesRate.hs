@@ -1,15 +1,11 @@
 module Handler.AddDuesRate where
 
 import Import
-
-newDuesRateForm :: Form DuesRate
-newDuesRateForm = renderDivs $ DuesRate
- <$> areq textField "Dues rate name" Nothing
- <*> areq intField "Dues rate amount" Nothing 
+import DuesRateForm
 
 getAddDuesRateR :: Handler Html
 getAddDuesRateR = do 
-  (drWidget, enctype) <- generateFormPost newDuesRateForm
+  (drWidget, enctype) <- generateFormPost $ duesRateForm Nothing
   defaultLayout $ [whamlet|
     <h2>Add a dues rate:
     <form method=post enctype=#{enctype}>
@@ -18,7 +14,7 @@ getAddDuesRateR = do
 
 postAddDuesRateR :: Handler Html
 postAddDuesRateR = do
-  ((result, duesRateWidget), enctype) <- runFormPost newDuesRateForm
+  ((result, duesRateWidget), enctype) <- runFormPost $ duesRateForm Nothing
   case result of 
     FormSuccess duesRate -> do
       runDB $ insert duesRate

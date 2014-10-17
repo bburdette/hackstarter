@@ -13,6 +13,7 @@ Flag library-only
 
 library
     exposed-modules: Application
+                     DuesRateForm
                      Foundation
                      Import
                      Model
@@ -29,6 +30,7 @@ library
                      Handler.User
                      Handler.DuesRates
                      Handler.AddDuesRate
+                     Handler.DuesRate
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
