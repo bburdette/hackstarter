@@ -33,9 +33,11 @@ getUserR userId = do
     Nothing -> error "user id not found."
     Just userRec -> do 
       (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userForm (drList duesrates) (Just userRec))
-      (wutWidget, formEnctypee) <- generateFormPost $ identifyForm "wut" $ (mehForm "nope") 
+      ((res, wutWidget), formEnctypee) <- runFormPost $ identifyForm "wut" $ (mehForm "nope") 
       defaultLayout $ do 
         $(widgetFile "user")
+
+
 
 postUserR :: UserId -> Handler Html
 postUserR uid = 
@@ -48,8 +50,18 @@ postUserR uid =
           <- runFormPost $ identifyForm "wut" (mehForm "yep")
       case u_result of
         FormSuccess user -> do 
-          runDB $ replace uid user  
-          redirect UsersR
+          -- error $ show formWidget
+          -- (pp, ffdsf) <- runRequestBody
+          del <- lookupPostParam "delete"
+          sav <- lookupPostParam "save"
+          case (del, sav) of 
+            (Just _, _) -> do 
+              error "delete goes here"
+            (_, Just _) -> do 
+              runDB $ replace uid user  
+              redirect UsersR
+            _ -> do 
+              error "unknown button pressed probably"
         _ -> 
           case w_result of 
             FormSuccess meh -> do
