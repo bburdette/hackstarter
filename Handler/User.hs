@@ -25,7 +25,6 @@ getUserR userId = do
         $(widgetFile "user")
 
 
-
 postUserR :: UserId -> Handler Html
 postUserR uid = 
     do

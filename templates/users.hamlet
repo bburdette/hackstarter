@@ -2,10 +2,10 @@
 
 <h2> SSD Hackers 
 <ol> 
-  $forall Entity usrId usr <- theUsers 
+  $forall (E.Value usrId, E.Value usrident, E.Value drname, E.Value dramt) <- users
     <li> 
-      <a href=@{UserR usrId}> #{userIdent usr} 
-
+      <a href=@{UserR usrId}> #{usrident} 
+      #{drname} #{dramt}
 
 <a href=@{AddUserR}> Add a user
 <!-- <br>mah session: #{show sess} <br> -->
