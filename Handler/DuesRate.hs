@@ -24,7 +24,8 @@ postDuesRateR dri = do
   mbDel <- lookupPostParam "delete"
   case mbDel of 
     Just del -> do 
-      _ <- runDB $ delete dri 
+      _ <- runDB $ do 
+        delete dri 
       redirect DuesRatesR
     Nothing -> do 
       ((res,widg),enctype) <- runFormPost (duesRateForm Nothing)
