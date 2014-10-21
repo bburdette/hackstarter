@@ -6,7 +6,7 @@ getDuesRatesR :: Handler Html
 getDuesRatesR = do 
   theRates <- runDB $ selectList [] []
   defaultLayout $ do
-    setTitle "ha ha"
+    setTitle "Dues Rates"
     $(widgetFile "duesrates")
 
 postDuesRatesR :: Handler Html

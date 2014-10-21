@@ -2,6 +2,7 @@ User
     ident Text
     password Text Maybe
     duesrate DuesRateId
+    balance Int
     UniqueUser ident
     deriving Typeable Show
 Email
@@ -19,7 +20,7 @@ Link
 DuesRate
     name Text
     amount Int
-DuesPaid
+Ledger
     user UserId
     amount Int
     date UTCTime default=CURRENT_TIME
