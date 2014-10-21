@@ -13,7 +13,7 @@ getProjectsR = do
     <br>
     <a href=@{AddProjectR}>add new project
     <br>
-    <a href=@{HomeR}>maine paige
+    <a href=@{HomeR}>main page
     |]
 
 postProjectsR :: Handler Html

@@ -6,6 +6,8 @@
     <li> 
       <a href=@{DuesRateR duesRateId}> #{duesRateName duesRate} #{duesRateAmount duesRate}
 
+<input name="whatevs" type=button value="meh" onClick="alert('afa')">
+
 <a href=@{AddDuesRateR}> Add a rate
 <br>
 <a href=@{HomeR}>main page

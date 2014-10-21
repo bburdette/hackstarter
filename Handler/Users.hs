@@ -19,13 +19,13 @@ getUsersR = do
 getUsersR :: Handler Html
 getUsersR = do
   users <- runDB $ E.select 
-      $ E.from $ \(E.InnerJoin user duesRate) -> do 
-        E.on $ user ^. UserDuesrate E.==. duesRate ^. DuesRateId
-        return 
-          ( user ^. UserId,
-            user ^. UserIdent, 
-            duesRate ^. DuesRateName, 
-            duesRate ^. DuesRateAmount ) 
+    $ E.from $ \(E.InnerJoin user duesRate) -> do 
+      E.on $ user ^. UserDuesrate E.==. duesRate ^. DuesRateId
+      return 
+        ( user ^. UserId,
+          user ^. UserIdent, 
+          duesRate ^. DuesRateName, 
+          duesRate ^. DuesRateAmount ) 
   defaultLayout $ do
     aDomId <- newIdent
     $(widgetFile "users")

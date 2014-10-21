@@ -36,7 +36,8 @@ getProjectR projid = do
           <h2>Maintain a record!
           <form method=post enctype=#{enctype}> 
             ^{projWidget}
-            <input type=submit value="save changes">
+            <input type=submit name=save value="save changes">
+            <input type=submit name=delete value="delete project">
           <hr>
           <h3>Dependencies
           <ul>
@@ -59,12 +60,23 @@ postProjectR projid = let dummy = Project "" Nothing in
     ((resLink, linkWidget), enctype) <- 
         runFormPost $ identifyForm "link" linkToForm 
     case resProj of 
-      FormSuccess proj -> do 
-        result <- runDB $ replace projid proj
-        defaultLayout $ [whamlet|
-            project update attempted.  result: #{show result}
-            <br> <a href=@{ProjectsR}> Back to projects
-            |]
+      FormSuccess proj -> do
+        del <- lookupPostParam "delete"
+        sav <- lookupPostParam "save"
+        case (del, sav) of 
+          (Just _, Nothing) -> do 
+            result <- runDB $ delete projid
+            defaultLayout $ [whamlet|
+                project delete attempted.  result: #{show result}
+                <br> <a href=@{ProjectsR}> Back to projects
+                |]
+          (Nothing, Just _) -> do
+            result <- runDB $ replace projid proj
+            defaultLayout $ [whamlet|
+                project update attempted.  result: #{show result}
+                <br> <a href=@{ProjectsR}> Back to projects
+                |]
+          _ -> error "unknown button name!"
       FormFailure errors ->  error $ foldl (++) "there was errors in teh projform! " (map T.unpack errors)
       FormMissing ->
         -- no project form data.  maybe there's link form data?
