@@ -14,3 +14,4 @@
 /duesrates/ DuesRatesR GET POST
 /addduesrate/ AddDuesRateR GET POST
 /duesrate/#DuesRateId DuesRateR GET POST
+/addledgerentry/#UserId AddLedgerEntryR GET POST
