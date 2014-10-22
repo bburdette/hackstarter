@@ -1,6 +1,7 @@
 module UserForm where
 
 import Import
+import Data.Time.Calendar
 
 getDuesRates :: HandlerT App IO [Entity DuesRate] 
 getDuesRates = do
@@ -16,11 +17,19 @@ orzero mbuser =
     Nothing -> Just 0
     _ -> userBalance <$> mbuser
 
-userForm :: [(Text, Key DuesRate)] -> Maybe User -> Form User 
-userForm duesrates user = renderDivs $ User 
+ornow :: Day -> Maybe User -> Maybe Day
+ornow curday mbuser = 
+  case mbuser of 
+    Just user -> Just (userCreatedate user)
+    Nothing -> Just curday
+
+userForm :: Day -> [(Text, Key DuesRate)] -> Maybe User -> Form User 
+userForm curday duesrates user = renderDivs $ User 
   <$> areq textField "name" (userIdent <$> user)
   <*> aopt passwordField "Pwd" (userPassword <$> user)
   <*> areq (selectFieldList duesrates) "Dues rate" (userDuesrate <$> user)
   <*> areq intField ("balance" { fsAttrs = [("readonly", "")] }) (orzero user) 
+  <*> areq dayField ("Create Date" { fsAttrs = [("readonly", "")] }) 
+        (ornow curday user) 
 
 

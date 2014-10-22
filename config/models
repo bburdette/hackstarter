@@ -3,6 +3,7 @@ User
     password Text Maybe
     duesrate DuesRateId
     balance Int
+    createdate Day 
     UniqueUser ident
     deriving Typeable Show
 Email
@@ -23,7 +24,7 @@ DuesRate
 Ledger
     user UserId
     amount Int
-    date UTCTime default=CURRENT_TIME
+    date UTCTime default=CURRENT_TIMESTAMP
 
    
 

@@ -2,6 +2,7 @@ module Handler.User where
 
 import Import
 import UserForm
+import Data.Time.Clock
 
 data Meh = Meh { 
   wut :: String
@@ -15,11 +16,12 @@ mehForm wutt = renderDivs $ Meh
 getUserR :: UserId -> Handler Html
 getUserR userId = do
   mbUser <- runDB $ get userId
+  curtime <- lift getCurrentTime
   duesrates <- getDuesRates
   case mbUser of 
     Nothing -> error "user id not found."
     Just userRec -> do 
-      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userForm (drList duesrates) (Just userRec))
+      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userForm (utctDay curtime) (drList duesrates) (Just userRec))
       ((res, wutWidget), formEnctypee) <- runFormPost $ identifyForm "wut" $ (mehForm "nope") 
       defaultLayout $ do 
         $(widgetFile "user")
@@ -29,9 +31,10 @@ postUserR :: UserId -> Handler Html
 postUserR uid = 
     do
       duesrates <- getDuesRates
+      curtime <- lift getCurrentTime
       ((u_result, formWidget), formEnctype) 
           <- runFormPost $
-              identifyForm "user" (userForm (drList duesrates) Nothing)   
+              identifyForm "user" (userForm (utctDay curtime) (drList duesrates) Nothing)   
       ((w_result, wutWidget), formEnctype) 
           <- runFormPost $ identifyForm "wut" (mehForm "yep")
       case u_result of
