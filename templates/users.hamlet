@@ -7,6 +7,7 @@
       <a href=@{UserR usrId}> #{usrident} 
       #{drname} #{dramt}
       <a href=@{AddLedgerEntryR usrId}> add user transaction 
+      <a href=@{UserTransactionsR usrId}> show user transactions
 
 <a href=@{AddUserR}> Add a user
 <!-- <br>mah session: #{show sess} <br> -->
