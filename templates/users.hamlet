@@ -1,13 +1,18 @@
 <h1>_{MsgHello} Meh
 
 <h2> SSD Hackers 
-<ol> 
+<table> 
+  <tr>
+    <th> User
+    <th> Dues Rate
+    <th> Actions
   $forall (E.Value usrId, E.Value usrident, E.Value drname, E.Value dramt) <- users
-    <li> 
-      <a href=@{UserR usrId}> #{usrident} 
-      #{drname} #{dramt}
-      <a href=@{AddLedgerEntryR usrId}> add user transaction 
-      <a href=@{UserTransactionsR usrId}> show user transactions
+    <tr> 
+      <td> <a href=@{UserR usrId}> #{usrident} 
+      <td> #{drname} #{dramt}
+      <td> 
+        <a href=@{AddLedgerEntryR usrId}> add user transaction 
+        <a href=@{UserTransactionsR usrId}> show user transactions
 
 <a href=@{AddUserR}> Add a user
 <!-- <br>mah session: #{show sess} <br> -->
