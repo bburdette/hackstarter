@@ -33,6 +33,7 @@ library
                      Handler.DuesRate
                      Handler.AddLedgerEntry
                      Handler.UserTransactions
+                     Handler.Ledger
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

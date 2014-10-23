@@ -16,3 +16,4 @@
 /duesrate/#DuesRateId DuesRateR GET POST
 /addledgerentry/#UserId AddLedgerEntryR GET POST
 /usertransactions/#UserId UserTransactionsR GET POST
+/ledger/ LedgerR GET POST
