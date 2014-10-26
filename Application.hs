@@ -80,7 +80,6 @@ forKeyOpen t = do
   conn <- Sqlite.open t
   stmt <- Sqlite.prepare conn "PRAGMA foreign_keys = ON;"
   res <- Sqlite.step stmt 
-  print (show res)
   PSqlite.wrapConnection conn
 
 forKeyCreatePoolConfig :: MonadIO m => PSqlite.SqliteConf -> m Psql.ConnectionPool
