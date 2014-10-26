@@ -24,6 +24,12 @@ import Network.Wai.Logger (clockDateCacher)
 import Data.Default (def)
 import Yesod.Core.Types (loggerSet, Logger (Logger))
 
+-- BTB for sqlite foreign key activation. 
+import qualified Database.Persist.Sqlite as PSqlite
+import qualified Database.Sqlite as Sqlite
+import qualified Database.Persist.Sql as Psql
+import Control.Monad
+
 -- Import all relevant handler modules here.
 -- Don't forget to add new modules to your cabal file!
 import Handler.Home
@@ -67,6 +73,22 @@ makeApplication conf = do
     let logFunc = messageLoggerSource foundation (appLogger foundation)
     return (logWare $ defaultMiddlewaresNoLogging app, logFunc)
 
+
+-- forKeyOpen = Sqlite.open >=> PSqlite.wrapConnection
+forKeyOpen :: Text -> IO PSqlite.Connection
+forKeyOpen t = do 
+  conn <- Sqlite.open t
+  stmt <- Sqlite.prepare conn "PRAGMA foreign_keys = ON;"
+  res <- Sqlite.step stmt 
+  print (show res)
+  PSqlite.wrapConnection conn
+
+forKeyCreatePoolConfig :: MonadIO m => PSqlite.SqliteConf -> m Psql.ConnectionPool
+forKeyCreatePoolConfig (PSqlite.SqliteConf cs size) = forKeyCreateSqlitePool cs size
+
+forKeyCreateSqlitePool :: MonadIO m => Text -> Int -> m PSqlite.ConnectionPool
+forKeyCreateSqlitePool s = Psql.createSqlPool $ forKeyOpen s
+
 -- | Loads up any necessary settings, creates your foundation datatype, and
 -- performs some initialization.
 makeFoundation :: AppConfig DefaultEnv Extra -> IO App
@@ -76,7 +98,8 @@ makeFoundation conf = do
     dbconf <- withYamlEnvironment "config/sqlite.yml" (appEnv conf)
               Database.Persist.loadConfig >>=
               Database.Persist.applyEnv
-    p <- Database.Persist.createPoolConfig (dbconf :: Settings.PersistConf)
+    p <- forKeyCreatePoolConfig (dbconf :: Settings.PersistConf)
+    -- p <- Database.Persist.createPoolConfig (dbconf :: Settings.PersistConf)
 
     loggerSet' <- newStdoutLoggerSet defaultBufSize
     (getter, _) <- clockDateCacher
