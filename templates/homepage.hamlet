@@ -9,4 +9,6 @@ Look its links!
     <a href=@{DuesRatesR}> dues rates
   <li> Look at the 
     <a href=@{ProjectsR}> projects 
+  <li> Look at the 
+    <a href=@{LedgerR}> ledger 
 
