@@ -15,6 +15,7 @@ library
     exposed-modules: Application
                      DuesRateForm
                      Foundation
+                     ForkeyOpen
                      Import
                      Model
                      UserForm
