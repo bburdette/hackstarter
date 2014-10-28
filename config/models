@@ -25,7 +25,12 @@ Ledger
     user UserId
     amount Int
     date UTCTime default=CURRENT_TIMESTAMP
-
+Permission
+    name Text
+    description Text Maybe
+UserPermission
+    user UserId
+    permission PermissionId
    
 
 

@@ -11,4 +11,6 @@ Look its links!
     <a href=@{ProjectsR}> projects 
   <li> Look at the 
     <a href=@{LedgerR}> ledger 
+  <li> Look at the 
+    <a href=@{PermissionsR}> permissions 
 
