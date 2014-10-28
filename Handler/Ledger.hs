@@ -6,11 +6,11 @@ import           Database.Esqueleto      ((^.))
 
 getLedgerR :: Handler Html
 getLedgerR = do
-  [E.Value (Just frack)] <- runDB $ E.select 
+  [E.Value (Just amt)] <- runDB $ E.select 
     $ E.from $ \lolwut -> do 
       let sumamt = (E.sum_ (lolwut ^. LedgerAmount))
       return sumamt
-  let summ = frack :: Int in do
+  let summ = amt :: Int in do
     ledges <- runDB $ E.select 
       $ E.from $ \(E.InnerJoin user ledger) -> do 
         E.on $ user ^. UserId E.==. ledger ^. LedgerUser
