@@ -14,6 +14,7 @@ getLedgerR = do
     ledges <- runDB $ E.select 
       $ E.from $ \(E.InnerJoin user ledger) -> do 
         E.on $ user ^. UserId E.==. ledger ^. LedgerUser
+        E.orderBy $ [E.asc ( ledger ^. LedgerDate)]
         return 
           ( user ^. UserId,
             user ^. UserIdent, 
