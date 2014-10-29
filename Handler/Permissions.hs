@@ -13,7 +13,8 @@ getPermissionsR = do
         <th> Permissions
       $forall (Entity pid perm) <- perms
         <tr>
-          <td> #{ permissionName perm }
+          <td> 
+             <a href=@{PermissionR pid}> #{ permissionName perm }
     <h4>add permission
     <form method=post enctype=#{enctype}>
       ^{perform}
