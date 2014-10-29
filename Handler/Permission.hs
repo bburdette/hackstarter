@@ -17,4 +17,11 @@ getPermissionR pid = do
       |]
 
 postPermissionR :: PermissionId -> Handler Html
-postPermissionR = error "Not yet implemented: postPermissionR"
+postPermissionR pid = do
+  ((res,_),enctype) <- runFormPost $ permissionForm Nothing
+  case res of 
+    FormSuccess perm -> do 
+      runDB $ replace pid perm
+      redirect PermissionsR
+    _ -> error "record edit failed"
+  
