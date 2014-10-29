@@ -1,11 +1,14 @@
 module Handler.Permissions where
 
 import Import
+import PermissionForm
 
+{-
 permissionForm :: Maybe Permission -> Form Permission
 permissionForm mbperm = renderDivs $ Permission
   <$> areq textField "Name" (permissionName <$> mbperm)
   <*> aopt textField "Description" (permissionDescription <$> mbperm)
+-}
 
 getPermissionsR :: Handler Html
 getPermissionsR = do

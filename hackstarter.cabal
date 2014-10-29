@@ -14,6 +14,7 @@ Flag library-only
 library
     exposed-modules: Application
                      DuesRateForm
+                     PermissionForm 
                      Foundation
                      ForkeyOpen
                      Import
@@ -36,6 +37,7 @@ library
                      Handler.UserTransactions
                      Handler.Ledger
                      Handler.Permissions
+                     Handler.Permission
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

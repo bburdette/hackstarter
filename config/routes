@@ -18,3 +18,4 @@
 /usertransactions/#UserId UserTransactionsR GET POST
 /ledger/ LedgerR GET POST
 /permissions PermissionsR GET POST
+/permission/#PermissionId PermissionR GET POST
