@@ -4,6 +4,19 @@
   <input type=submit name="save" value="save changes">
   <input type=submit name="delete" value="delete user">
 
+<table>
+  <tr>
+    <th> Permissions
+  $forall (E.Value pid, E.Value pname) <- userperms
+    <tr>
+      <td> 
+        <a href=@{PermissionR pid}> #{pname}
+
+
+<form method=post enctype=#{formEnctype}>
+  ^{permWidget}
+  <input type=submit value="add permission">
+
 <form method=post enctype=#{formEnctype}>
   ^{wutWidget}
   <input type=submit value="yeah delete">
