@@ -1,6 +1,7 @@
 module Handler.LoginTest where
 
 import Import
+import qualified Data.Text as T
 
 data LoginInfo = LoginInfo {
   ident :: Text 
@@ -12,14 +13,22 @@ loginForm uident = renderDivs $ LoginInfo
 
 getLoginTestR :: Handler Html
 getLoginTestR = do
-  uident <- lookupSession "uidenelectFirst"
+  uid <- lookupSession "uid"
+  uident <- lookupSession "uident"
   (logwidg, enctype) <- generateFormPost $ loginForm uident
-  defaultLayout $ [whamlet|
-    <h5> Login
-    <form method=post enctype=#{enctype}>
-      ^{logwidg}
-      <input type=submit value="ok">
-    |]
+  let mbuid = fmap (read . T.unpack) uid in 
+    case mbuid of 
+      Just userid -> do 
+        mbusar <- runDB $ get userid 
+        defaultLayout $ [whamlet|
+          <h5> Login
+          #{show (fmap userCreatedate mbusar)}
+          #{show uid}
+          <form method=post enctype=#{enctype}>
+            ^{logwidg}
+            <input type=submit value="ok">
+          |]
+      Nothing -> error "nothing"
 
 {-
 getaUser :: Maybe Text -> Handler (Maybe User)
@@ -37,7 +46,7 @@ postLoginTestR = do
       -- mbusr <- getaUser (ident loginfo) 
       case mbusr of 
         Just (Entity uid usr) -> do
-          -- setSession "uid" uid 
+          setSession "uid" $ T.pack $ show uid 
           setSession "uident" (userIdent usr)
           redirect HomeR
         Nothing -> error "user not found"
