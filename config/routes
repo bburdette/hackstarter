@@ -19,3 +19,4 @@
 /ledger/ LedgerR GET POST
 /permissions PermissionsR GET POST
 /permission/#PermissionId PermissionR GET POST
+/login LoginTestR GET POST

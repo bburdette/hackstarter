@@ -38,6 +38,7 @@ library
                      Handler.Ledger
                      Handler.Permissions
                      Handler.Permission
+                     Handler.LoginTest
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT
