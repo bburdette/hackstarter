@@ -16,25 +16,20 @@ getLoginTestR = do
   uid <- lookupSession "uid"
   uident <- lookupSession "uident"
   (logwidg, enctype) <- generateFormPost $ loginForm uident
-  let mbuid = fmap (read . T.unpack) uid in 
-    case mbuid of 
-      Just userid -> do 
-        mbusar <- runDB $ get userid 
-        defaultLayout $ [whamlet|
-          <h5> Login
-          #{show (fmap userCreatedate mbusar)}
-          #{show uid}
-          <form method=post enctype=#{enctype}>
-            ^{logwidg}
-            <input type=submit value="ok">
-          |]
-      Nothing -> error "nothing"
-
-{-
-getaUser :: Maybe Text -> Handler (Maybe User)
-getaUser ident = do 
-  runDB $ select [UserIdent ==. ident]
--}
+  let mbuid = fmap (read . T.unpack) uid in do 
+    mbusar <-
+        case mbuid of 
+          Just userid -> 
+            runDB $ get userid
+          Nothing -> return Nothing
+    defaultLayout $ [whamlet|
+      <h5> Login
+      #{show (fmap userCreatedate mbusar)}
+      #{show uid}
+      <form method=post enctype=#{enctype}>
+        ^{logwidg}
+        <input type=submit value="ok">
+      |]
 
 postLoginTestR :: Handler Html
 postLoginTestR = do 
