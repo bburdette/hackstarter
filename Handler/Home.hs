@@ -12,6 +12,7 @@ import Import
 -- inclined, or create a single monolithic file.
 getHomeR :: Handler Html
 getHomeR = do
+    maid <- requireAuthId
     (formWidget, formEnctype) <- generateFormPost sampleForm
     let submission = Nothing :: Maybe (FileInfo, Text)
         handlerName = "getHomeR" :: Text
@@ -22,6 +23,7 @@ getHomeR = do
 
 postHomeR :: Handler Html
 postHomeR = do
+    maid <- requireAuthId
     ((result, formWidget), formEnctype) <- runFormPost sampleForm
     let handlerName = "postHomeR" :: Text
         submission = case result of
