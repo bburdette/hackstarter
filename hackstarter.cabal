@@ -39,6 +39,7 @@ library
                      Handler.Permissions
                      Handler.Permission
                      Handler.LoginTest
+                     Permissions
 
     if flag(dev) || flag(library-only)
         cpp-options:   -DDEVELOPMENT

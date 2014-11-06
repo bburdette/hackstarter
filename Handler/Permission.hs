@@ -2,23 +2,10 @@ module Handler.Permission where
 
 import Import
 import PermissionForm
+import Permissions
+
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
-
-
-getPermissionUsers :: PermissionId -> 
-  Handler [(E.Value (KeyBackend E.SqlBackend User), E.Value Text)]
-getPermissionUsers pid = do 
-  users <- runDB $ E.select 
-    $ E.from $ \(E.InnerJoin userpermission user) -> do 
-      E.where_ $ userpermission ^. UserPermissionPermission E.==. (E.val pid)
-      E.on $ userpermission ^. UserPermissionUser E.==. user ^. UserId 
-      E.orderBy $ [E.asc ( user ^. UserIdent )]
-      return 
-        ( user ^. UserId,
-          user ^. UserIdent ) 
-  return users
-
 
 getPermissionR :: PermissionId -> Handler Html
 getPermissionR pid = do

@@ -21,6 +21,7 @@ Link
 DuesRate
     name Text
     amount Int
+    UniqueDuesRate name
 Ledger
     user UserId
     amount Int
@@ -28,6 +29,7 @@ Ledger
 Permission
     name Text
     description Text Maybe
+    PermissionUniqueName name
 UserPermission
     user UserId
     permission PermissionId

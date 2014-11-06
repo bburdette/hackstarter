@@ -27,6 +27,8 @@ import Yesod.Core.Types (loggerSet, Logger (Logger))
 -- BTB for sqlite foreign key activation. 
 import ForkeyOpen
 
+import Permissions
+
 -- Import all relevant handler modules here.
 -- Don't forget to add new modules to your cabal file!
 import Handler.Home
