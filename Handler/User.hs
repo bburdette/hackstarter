@@ -1,6 +1,7 @@
 module Handler.User where
 
 import Import
+import Permissions
 import UserForm
 import Data.Time.Clock
 import qualified Database.Esqueleto      as E
@@ -43,8 +44,8 @@ addPermForm :: [(Text, Key Permission)] -> Form PermId
 addPermForm permlist = renderDivs $ PermId
  <$> areq (selectFieldList permlist) "Add Permission" Nothing
 
-getUserR :: UserId -> Handler Html
-getUserR userId = do
+getUserMaintR :: UserId -> Handler Html
+getUserMaintR userId = do
   mbUser <- runDB $ get userId
   curtime <- lift getCurrentTime
   duesrates <- getDuesRates
@@ -59,6 +60,24 @@ getUserR userId = do
       defaultLayout $ do 
         $(widgetFile "user")
 
+-- readonly user view.
+getUserRoR :: UserId -> Handler Html
+getUserRoR userId = do
+  mbUser <- runDB $ get userId
+  userperms <- getUserPermissions userId
+  case mbUser of 
+    Nothing -> error "user id not found."
+    Just user -> do 
+     defaultLayout $ do 
+        $(widgetFile "user_ro")
+
+getUserR :: UserId -> Handler Html
+getUserR userId = do
+  logid <- requireAuthId
+  admin <- isAdmin logid
+  case (admin || (logid == userId)) of
+    True -> getUserMaintR userId
+    False -> getUserRoR userId
 
 postUserR :: UserId -> Handler Html
 postUserR uid = 

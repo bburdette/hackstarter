@@ -1,0 +1,15 @@
+<h1> Hacker Info
+
+Hacker name: #{userIdent user}
+<br>member since: #{show (userCreatedate user)}
+
+
+<table>
+  <tr>
+    <th> Permissions
+  $forall (E.Value pid, E.Value pname) <- userperms
+    <tr>
+      <td> 
+        <a href=@{PermissionR pid}> #{pname}
+
+

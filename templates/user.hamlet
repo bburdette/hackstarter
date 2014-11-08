@@ -24,4 +24,3 @@
 <form method=post enctype=#{formEnctype}>
   <input type=submit value="delete user">
 
-<p><a href=@{HomeR}>main page
