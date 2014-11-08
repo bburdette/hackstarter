@@ -2,9 +2,12 @@ module Handler.DuesRate where
 
 import Import
 import DuesRateForm
+import Permissions
 
 getDuesRateR :: DuesRateId -> Handler Html
 getDuesRateR dri = do 
+  -- todo: require admin
+  mbid <- requireAuthId
   mbDr <- runDB $ get dri
   case mbDr of 
     Nothing -> error "duesrate not found"
@@ -21,6 +24,7 @@ getDuesRateR dri = do
 
 postDuesRateR :: DuesRateId -> Handler Html
 postDuesRateR dri = do
+  _ <- requireAuthId
   mbDel <- lookupPostParam "delete"
   case mbDel of 
     Just del -> do 
