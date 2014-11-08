@@ -98,7 +98,19 @@ makeFoundation conf = do
         (Database.Persist.runPool dbconf (runMigration migrateAll) p)
         (messageLoggerSource foundation logger)
 
+    -- execute this Handler for the sqls
+    _ <- runFakeHandler mempty appLogger foundation checkAdmin
+
     return foundation
+
+{-
+-- doesn't compile for me, but maybe try to make it work later.
+fakeHandler :: App -> Handler a -> IO a
+fakeHandler app f = 
+    runFakeHandler mempty appLogger app f >>= either
+        (errorM . ("runFakeHandler issue: " <>) . show)
+        return
+-}
 
 -- for yesod devel
 getApplicationDev :: IO (Int, Application)
