@@ -1,0 +1,7 @@
+<h1>_{MsgHello} Meh
+
+<h2> SSD dues rates 
+<ul> 
+  $forall Entity duesRateId duesRate <- theRates
+    <li> 
+      #{duesRateName duesRate} #{duesRateAmount duesRate}
