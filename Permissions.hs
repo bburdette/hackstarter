@@ -42,6 +42,11 @@ getPermissionId pname = do
   case meh of 
     Just (Entity pid perm) -> return (Just pid)
     _ -> return Nothing
+
+isAdmin :: UserId -> Handler Bool
+isAdmin uid = do 
+  pid <- getPermissionId "admin"
+  maybe (return False) (hasPermission uid) pid
  
 {- 
 getPermissionUsers :: PermissionId -> 

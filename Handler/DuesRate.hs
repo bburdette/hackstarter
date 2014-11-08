@@ -7,20 +7,24 @@ import Permissions
 getDuesRateR :: DuesRateId -> Handler Html
 getDuesRateR dri = do 
   -- todo: require admin
-  mbid <- requireAuthId
-  mbDr <- runDB $ get dri
-  case mbDr of 
-    Nothing -> error "duesrate not found"
-    Just dr -> do 
-      (widg, enctype) <- generateFormPost (duesRateForm mbDr)
-      defaultLayout $ do
-        [whamlet| 
-          <form method=post enctype=#{enctype}>
-            ^{widg}
-            <input type=submit value="save changes">
-          <form method=post enctype=#{enctype}>
-            <input type=submit name="delete" value="delete">
-        |]
+  id <- requireAuthId
+  admin <- isAdmin id
+  case admin of 
+    False -> redirect $ DuesRatesR
+    True -> do 
+      mbDr <- runDB $ get dri
+      case mbDr of 
+        Nothing -> error "duesrate not found"
+        Just dr -> do 
+          (widg, enctype) <- generateFormPost (duesRateForm mbDr)
+          defaultLayout $ do
+            [whamlet| 
+              <form method=post enctype=#{enctype}>
+                ^{widg}
+                <input type=submit value="save changes">
+              <form method=post enctype=#{enctype}>
+                <input type=submit name="delete" value="delete">
+            |]
 
 postDuesRateR :: DuesRateId -> Handler Html
 postDuesRateR dri = do
