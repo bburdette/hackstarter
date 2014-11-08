@@ -1,0 +1,15 @@
+<h1>_{MsgHello} Meh
+
+<h2> SSD Hackers 
+<table> 
+  <tr>
+    <th> User
+  $forall Entity usrId usr <- users
+    <tr> 
+      <td> <a href=@{UserR usrId}> #{userIdent usr} 
+
+<a href=@{AddUserR}> Add a user
+<!-- <br>mah session: #{show sess} <br> -->
+<!-- <a href="#{googlink}">google -->
+<br>
+<a href=@{HomeR}>main page
