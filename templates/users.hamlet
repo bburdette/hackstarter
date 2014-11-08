@@ -14,8 +14,5 @@
         <a href=@{AddLedgerEntryR usrId}> add user transaction 
         <a href=@{UserTransactionsR usrId}> show user transactions
 
-<a href=@{AddUserR}> Add a user
-<!-- <br>mah session: #{show sess} <br> -->
-<!-- <a href="#{googlink}">google -->
 <br>
-<a href=@{HomeR}>main page
+<a href=@{AddUserR}> Add a user

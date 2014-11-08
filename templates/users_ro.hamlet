@@ -8,8 +8,3 @@
     <tr> 
       <td> <a href=@{UserR usrId}> #{userIdent usr} 
 
-<a href=@{AddUserR}> Add a user
-<!-- <br>mah session: #{show sess} <br> -->
-<!-- <a href="#{googlink}">google -->
-<br>
-<a href=@{HomeR}>main page
