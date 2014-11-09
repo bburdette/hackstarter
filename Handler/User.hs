@@ -82,38 +82,43 @@ getUserR userId = do
 postUserR :: UserId -> Handler Html
 postUserR uid = 
     do
-      duesrates <- getDuesRates
-      curtime <- lift getCurrentTime
-      ((u_result, formWidget), formEnctype) 
-          <- runFormPost $
-              identifyForm "user" (userForm (utctDay curtime) (drList duesrates) Nothing)   
-      permissions <- getPermissions
-      ((p_result, permWidget), permEnctype) 
-          <- runFormPost $ identifyForm "perm" (addPermForm (permList permissions)) 
-      ((w_result, wutWidget), formEnctype) 
-          <- runFormPost $ identifyForm "wut" (mehForm "yep")
-      case u_result of
-        FormSuccess user -> do 
-          del <- lookupPostParam "delete"
-          sav <- lookupPostParam "save"
-          case (del, sav) of 
-            (Just _, _) -> do 
-              error "delete goes here"
-            (_, Just _) -> do 
-              runDB $ replace uid user  
-              redirect UsersR
-            _ -> do 
-              error "unknown button pressed probably"
-        _ -> 
-          case p_result of 
-            FormSuccess perm -> do
-              res <- runDB $ insert $ UserPermission uid (pid perm) 
-              redirect $ UserR uid 
+      logid <- requireAuthId
+      admin <- isAdmin logid
+      case (admin || (logid == uid)) of
+        False -> error "not authorized" 
+        True -> do 
+          duesrates <- getDuesRates
+          curtime <- lift getCurrentTime
+          ((u_result, formWidget), formEnctype) 
+              <- runFormPost $
+                  identifyForm "user" (userForm (utctDay curtime) (drList duesrates) Nothing)   
+          permissions <- getPermissions
+          ((p_result, permWidget), permEnctype) 
+              <- runFormPost $ identifyForm "perm" (addPermForm (permList permissions)) 
+          ((w_result, wutWidget), formEnctype) 
+              <- runFormPost $ identifyForm "wut" (mehForm "yep")
+          case u_result of
+            FormSuccess user -> do 
+              del <- lookupPostParam "delete"
+              sav <- lookupPostParam "save"
+              case (del, sav) of 
+                (Just _, _) -> do 
+                  error "delete goes here"
+                (_, Just _) -> do 
+                  runDB $ replace uid user  
+                  redirect UsersR
+                _ -> do 
+                  error "unknown button pressed probably"
             _ -> 
-             case w_result of 
-              FormSuccess meh -> do
-                runDB $ delete uid
-                defaultLayout [whamlet| record deleted. #{show w_result}|]
-              _ -> error "error"
-                 
+              case p_result of 
+                FormSuccess perm -> do
+                  res <- runDB $ insert $ UserPermission uid (pid perm) 
+                  redirect $ UserR uid 
+                _ -> 
+                 case w_result of 
+                  FormSuccess meh -> do
+                    runDB $ delete uid
+                    defaultLayout [whamlet| record deleted. #{show w_result}|]
+                  _ -> error "error"
+                     
 
