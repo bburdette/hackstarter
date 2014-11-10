@@ -1,14 +1,17 @@
 module Handler.Project where
 
 import Import
+import Data.Time
 import qualified Data.Text as T
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 
-projectForm :: Project -> Form Project
-projectForm proj = renderDivs $ Project
- <$> areq textField "Name" (Just (projectName proj))
- <*> aopt textField "Description" (Just (projectDescription proj))
+projectForm :: UserId -> UTCTime -> Maybe Project -> Form Project
+projectForm curusr curtime proj = renderDivs $ Project
+ <$> areq textField "Name" (projectName <$> proj)
+ <*> aopt textField "Description" (projectDescription <$> proj)
+ <*> pure (maybe curusr projectCreator proj)   
+ <*> pure (maybe curtime projectCreatedate proj)
 
 data LinkTo = LinkTo 
   { toField :: Text }
@@ -20,10 +23,12 @@ linkToForm = renderDivs $ LinkTo
 getProjectR :: ProjectId -> Handler Html
 getProjectR projid = do
   mbproj <- runDB $ get projid 
+  loguid <- requireAuthId
+  now <- lift getCurrentTime
   case mbproj of 
     Nothing -> error $ "invalid project id: " ++ (show projid)
     Just proj -> do 
-      (projWidget, enctype) <- generateFormPost $ identifyForm "proj" (projectForm proj)
+      (projWidget, enctype) <- generateFormPost $ identifyForm "proj" (projectForm loguid now (Just proj))
       (linkWidget, enctype) <- generateFormPost $ identifyForm "link" linkToForm 
       namedlinks <- runDB $ E.select 
         $ E.from $ \(E.InnerJoin link project) -> do 
@@ -53,44 +58,45 @@ getProjectR projid = do
           |]
        
 postProjectR :: ProjectId -> Handler Html
-postProjectR projid = let dummy = Project "" Nothing in
-  do 
-    ((resProj, projWidget), enctype) <- 
-        runFormPost $ identifyForm "proj" (projectForm dummy)
-    ((resLink, linkWidget), enctype) <- 
-        runFormPost $ identifyForm "link" linkToForm 
-    case resProj of 
-      FormSuccess proj -> do
-        del <- lookupPostParam "delete"
-        sav <- lookupPostParam "save"
-        case (del, sav) of 
-          (Just _, Nothing) -> do 
-            result <- runDB $ delete projid
-            defaultLayout $ [whamlet|
-                project delete attempted.  result: #{show result}
-                <br> <a href=@{ProjectsR}> Back to projects
-                |]
-          (Nothing, Just _) -> do
-            result <- runDB $ replace projid proj
-            defaultLayout $ [whamlet|
-                project update attempted.  result: #{show result}
-                <br> <a href=@{ProjectsR}> Back to projects
-                |]
-          _ -> error "unknown button name!"
-      FormFailure errors ->  error $ foldl (++) "there was errors in teh projform! " (map T.unpack errors)
-      FormMissing ->
-        -- no project form data.  maybe there's link form data?
-        case resLink of 
-          FormSuccess linktoform -> do
-            mbproj <- runDB $ selectFirst [ ProjectName ==. (toField linktoform)] []
-            case mbproj of 
-              Just (Entity toProjId toproj) ->
-                let newlink = Link projid toProjId in do
-                  res <- runDB $ insert newlink
-                  defaultLayout [whamlet|worked #{show res}|]
-              Nothing -> error "baddd"
-          FormFailure errors ->  error $ foldr (++) "there was errors in teh linkform! " (map T.unpack errors)
-          _ -> error "no form data"
-  
+postProjectR projid = do
+  loguid <- requireAuthId
+  now <- lift getCurrentTime 
+  ((resProj, projWidget), enctype) <- 
+      runFormPost $ identifyForm "proj" (projectForm loguid now Nothing)
+  ((resLink, linkWidget), enctype) <- 
+      runFormPost $ identifyForm "link" linkToForm 
+  case resProj of 
+    FormSuccess proj -> do
+      del <- lookupPostParam "delete"
+      sav <- lookupPostParam "save"
+      case (del, sav) of 
+        (Just _, Nothing) -> do 
+          result <- runDB $ delete projid
+          defaultLayout $ [whamlet|
+              project delete attempted.  result: #{show result}
+              <br> <a href=@{ProjectsR}> Back to projects
+              |]
+        (Nothing, Just _) -> do
+          result <- runDB $ replace projid proj
+          defaultLayout $ [whamlet|
+              project update attempted.  result: #{show result}
+              <br> <a href=@{ProjectsR}> Back to projects
+              |]
+        _ -> error "unknown button name!"
+    FormFailure errors ->  error $ foldl (++) "there was errors in teh projform! " (map T.unpack errors)
+    FormMissing ->
+      -- no project form data.  maybe there's link form data?
+      case resLink of 
+        FormSuccess linktoform -> do
+          mbproj <- runDB $ selectFirst [ ProjectName ==. (toField linktoform)] []
+          case mbproj of 
+            Just (Entity toProjId toproj) ->
+              let newlink = Link projid toProjId in do
+                res <- runDB $ insert newlink
+                defaultLayout [whamlet|worked #{show res}|]
+            Nothing -> error "baddd"
+        FormFailure errors ->  error $ foldr (++) "there was errors in teh linkform! " (map T.unpack errors)
+        _ -> error "no form data"
+
 
 

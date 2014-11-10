@@ -14,6 +14,8 @@ Email
 Project
     name Text
     description Text Maybe
+    creator UserId
+    createdate UTCTime default=CURRENT_TIMESTAMP
 Link
     fromproj ProjectId
     toproj ProjectId
