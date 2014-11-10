@@ -36,6 +36,19 @@ getPermissions = do
 permList :: [(Entity Permission)] -> [(Text, Key Permission)]
 permList = fmap (\(Entity blah vole) -> (permissionName vole, blah))
 
+upermList :: [(E.Value (KeyBackend E.SqlBackend Permission), E.Value Text)] -> [(Text, Key Permission)]
+upermList = fmap (\(E.Value key, E.Value name) -> (name, key))
+
+getPermList :: UserId -> Bool -> Handler [(Text, Key Permission)]
+getPermList uid isadmin = do
+  case isadmin of 
+    True -> do 
+      perms <- getPermissions
+      return $ permList perms
+    False -> do 
+      perms <- getUserPermissions uid
+      return $ upermList perms
+
 data PermId = PermId { 
   pid :: PermissionId
   }
@@ -44,19 +57,20 @@ addPermForm :: [(Text, Key Permission)] -> Form PermId
 addPermForm permlist = renderDivs $ PermId
  <$> areq (selectFieldList permlist) "Add Permission" Nothing
 
-getUserMaintR :: UserId -> Handler Html
-getUserMaintR userId = do
+getUserMaintR :: UserId -> UserId -> Handler Html
+getUserMaintR logid userId = do
+  admin <- isAdmin userId
   mbUser <- runDB $ get userId
   curtime <- lift getCurrentTime
   duesrates <- getDuesRates
-  permissions <- getPermissions
+  addpermissions <- getPermList logid admin
   userperms <- getUserPermissions userId
   case mbUser of 
     Nothing -> error "user id not found."
     Just userRec -> do 
       (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userForm (utctDay curtime) (drList duesrates) (Just userRec))
       ((res, wutWidget), formEnctypee) <- runFormPost $ identifyForm "wut" $ (mehForm "nope")
-      (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm (permList permissions) 
+      (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm addpermissions 
       defaultLayout $ do 
         $(widgetFile "user")
 
@@ -76,7 +90,7 @@ getUserR userId = do
   logid <- requireAuthId
   admin <- isAdmin logid
   case (admin || (logid == userId)) of
-    True -> getUserMaintR userId
+    True -> getUserMaintR logid userId
     False -> getUserRoR userId
 
 postUserR :: UserId -> Handler Html
