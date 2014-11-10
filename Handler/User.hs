@@ -57,24 +57,61 @@ addPermForm :: [(Text, Key Permission)] -> Form PermId
 addPermForm permlist = renderDivs $ PermId
  <$> areq (selectFieldList permlist) "Add Permission" Nothing
 
-getUserMaintR :: UserId -> UserId -> Handler Html
-getUserMaintR logid userId = do
+-- admin user maintenance.
+-- admin can see, change dues rate.
+-- admin can add permissions.
+getUserAdminR :: UserId -> UserId -> Handler Html
+getUserAdminR logid userId = do
+  admin <- isAdmin logid
+  mbUser <- runDB $ get userId
+  curtime <- lift getCurrentTime
+  duesrates <- getDuesRates
+  addpermissions <- getPermList logid admin 
+  userperms <- getUserPermissions userId
+  case mbUser of 
+    Nothing -> error "user id not found."
+    Just user -> do 
+      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userForm (utctDay curtime) (drList duesrates) (Just user))
+      (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm addpermissions 
+      defaultLayout $ do 
+        $(widgetFile "user_admin")
+
+-- users-viewing-users page.  
+-- allows adding permissions to other users. 
+getUserUserR :: UserId -> UserId -> Handler Html
+getUserUserR logid userId = do
+  admin <- isAdmin logid 
+  mbUser <- runDB $ get userId
+  curtime <- lift getCurrentTime
+  duesrates <- getDuesRates
+  addpermissions <- getPermList logid admin 
+  userperms <- getUserPermissions userId
+  case mbUser of 
+    Nothing -> error "user id not found."
+    Just user -> do 
+      (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm addpermissions 
+      defaultLayout $ do 
+        $(widgetFile "user_user")
+
+-- self maint, non admin.
+-- can change password, see permissions, see dues rate.
+getUserSelfR :: UserId -> Handler Html
+getUserSelfR userId = do
   admin <- isAdmin userId
   mbUser <- runDB $ get userId
   curtime <- lift getCurrentTime
   duesrates <- getDuesRates
-  addpermissions <- getPermList logid admin
+  addpermissions <- getPermList userId admin
   userperms <- getUserPermissions userId
   case mbUser of 
     Nothing -> error "user id not found."
-    Just userRec -> do 
-      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userForm (utctDay curtime) (drList duesrates) (Just userRec))
-      ((res, wutWidget), formEnctypee) <- runFormPost $ identifyForm "wut" $ (mehForm "nope")
+    Just user -> do 
+      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userForm (utctDay curtime) (drList duesrates) (Just user))
       (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm addpermissions 
       defaultLayout $ do 
-        $(widgetFile "user")
+        $(widgetFile "user_self")
 
--- readonly user view.
+-- read-only user view.  will we ever need this? 
 getUserRoR :: UserId -> Handler Html
 getUserRoR userId = do
   mbUser <- runDB $ get userId
@@ -89,9 +126,10 @@ getUserR :: UserId -> Handler Html
 getUserR userId = do
   logid <- requireAuthId
   admin <- isAdmin logid
-  case (admin || (logid == userId)) of
-    True -> getUserMaintR logid userId
-    False -> getUserRoR userId
+  case (admin, (logid == userId)) of
+    (True, _) -> getUserAdminR logid userId
+    (False, True) -> getUserSelfR userId
+    (False, False) -> getUserUserR logid userId
 
 postUserR :: UserId -> Handler Html
 postUserR uid = 
@@ -126,7 +164,7 @@ postUserR uid =
             _ -> 
               case p_result of 
                 FormSuccess perm -> do
-                  res <- runDB $ insert $ UserPermission uid (pid perm) 
+                  res <- runDB $ insert $ UserPermission uid (pid perm) logid
                   redirect $ UserR uid 
                 _ -> 
                  case w_result of 

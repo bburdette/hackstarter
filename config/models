@@ -35,7 +35,7 @@ Permission
 UserPermission
     user UserId
     permission PermissionId
+    creator UserId            -- who created this permission record?
    
-
 
  -- By default this file is used in Model.hs (which is imported by Foundation.hs)

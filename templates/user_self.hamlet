@@ -1,0 +1,18 @@
+<h1> User Maintenance
+
+<form method=post enctype=#{formEnctype}>
+  ^{formWidget}
+  <input type=submit name="save" value="save changes">
+  <input type=submit name="delete" value="delete user">
+
+<br>member since: #{show (userCreatedate user)}
+
+<table>
+  <tr>
+    <th> Permissions
+  $forall (E.Value pid, E.Value pname) <- userperms
+    <tr>
+      <td> 
+        <a href=@{PermissionR pid}> #{pname}
+
+
