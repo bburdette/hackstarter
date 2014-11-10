@@ -23,8 +23,17 @@ ornow curday mbuser =
     Just user -> Just (userCreatedate user)
     Nothing -> Just curday
 
-userForm :: Day -> [(Text, Key DuesRate)] -> Maybe User -> Form User 
-userForm curday duesrates user = renderDivs $ User 
+userFormSelf :: User -> Form User 
+userFormSelf user = renderDivs $ User 
+  <$> areq textField "name" (Just $ userIdent user)
+  <*> aopt passwordField "Pwd" (Just $ userPassword user)
+  <*> pure (userDuesrate user)
+  <*> areq intField ("balance" { fsAttrs = [("readonly", "")] }) (Just $ userBalance user) 
+  <*> areq dayField ("Create Date" { fsAttrs = [("readonly", "")] }) 
+        (Just $ userCreatedate user) 
+
+userFormAdmin :: Day -> [(Text, Key DuesRate)] -> Maybe User -> Form User 
+userFormAdmin curday duesrates user = renderDivs $ User 
   <$> areq textField "name" (userIdent <$> user)
   <*> aopt passwordField "Pwd" (userPassword <$> user)
   <*> areq (selectFieldList duesrates) "Dues rate" (userDuesrate <$> user)

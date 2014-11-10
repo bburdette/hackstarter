@@ -9,7 +9,7 @@ getAddUserR :: Handler Html
 getAddUserR = do
   drs <- getDuesRates
   curtime <- lift getCurrentTime
-  (userWidget, enctype) <- generateFormPost (userForm (utctDay curtime) (drList drs) Nothing)
+  (userWidget, enctype) <- generateFormPost (userFormAdmin (utctDay curtime) (drList drs) Nothing)
   defaultLayout $ [whamlet|
     <h2> Add a new user:
     <form method=post enctype=#{enctype}>
@@ -20,7 +20,7 @@ postAddUserR :: Handler Html
 postAddUserR = do
   drs <- getDuesRates
   curtime <- lift getCurrentTime
-  ((res, userWidget),enctype) <- runFormPost (userForm (utctDay curtime) (drList drs) Nothing)
+  ((res, userWidget),enctype) <- runFormPost (userFormAdmin (utctDay curtime) (drList drs) Nothing)
   case res of
     FormSuccess user -> do
       usarID <- runDB $ insert user 

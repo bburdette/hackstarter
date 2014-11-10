@@ -71,7 +71,7 @@ getUserAdminR logid userId = do
   case mbUser of 
     Nothing -> error "user id not found."
     Just user -> do 
-      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userForm (utctDay curtime) (drList duesrates) (Just user))
+      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userFormAdmin (utctDay curtime) (drList duesrates) (Just user))
       (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm addpermissions 
       defaultLayout $ do 
         $(widgetFile "user_admin")
@@ -100,14 +100,11 @@ getUserSelfR userId = do
   admin <- isAdmin userId
   mbUser <- runDB $ get userId
   curtime <- lift getCurrentTime
-  duesrates <- getDuesRates
-  addpermissions <- getPermList userId admin
   userperms <- getUserPermissions userId
   case mbUser of 
     Nothing -> error "user id not found."
     Just user -> do 
-      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userForm (utctDay curtime) (drList duesrates) (Just user))
-      (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm addpermissions 
+      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userFormSelf user)
       defaultLayout $ do 
         $(widgetFile "user_self")
 
@@ -143,7 +140,7 @@ postUserR uid =
           curtime <- lift getCurrentTime
           ((u_result, formWidget), formEnctype) 
               <- runFormPost $
-                  identifyForm "user" (userForm (utctDay curtime) (drList duesrates) Nothing)   
+                  identifyForm "user" (userFormAdmin (utctDay curtime) (drList duesrates) Nothing)   
           permissions <- getPermissions
           ((p_result, permWidget), permEnctype) 
               <- runFormPost $ identifyForm "perm" (addPermForm (permList permissions)) 
