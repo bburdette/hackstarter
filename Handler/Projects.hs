@@ -4,6 +4,7 @@ import Import
 
 getProjectsR :: Handler Html
 getProjectsR = do
+  _ <- requireAuthId
   projs <- runDB $ selectList [] [] 
   defaultLayout $ [whamlet|
     <h2>You are in the Projects:
