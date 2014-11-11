@@ -80,13 +80,13 @@ getPermissionUserIds pid = do
 --      permId <- runDB $ insert $ Permission permname Nothing
 --      return permId
 
-checkPermission :: Text -> Handler (Maybe PermissionId)
-checkPermission permname = do 
+checkPermission :: Text -> Bool -> Handler (Maybe PermissionId)
+checkPermission permname userAddable = do 
   meh <- runDB $ getBy $ PermissionUniqueName permname
   case meh of 
     Nothing -> 
       do 
-        permId <- runDB $ insert $ Permission permname Nothing
+        permId <- runDB $ insert $ Permission permname Nothing userAddable
         return $ Just permId
     Just (Entity key wha) -> return $ Just key
   
@@ -106,7 +106,7 @@ checkDuesRate drname amount = do
 -- make sure there's an admin permission, and an admin user.
 checkAdmin :: Handler (Maybe UserId)
 checkAdmin = do 
-  mbpid <- checkPermission "admin"
+  mbpid <- checkPermission "admin" False
   case mbpid of 
     Just pid -> do
       admin <- runDB $ selectFirst [UserPermissionPermission ==. pid] [] 

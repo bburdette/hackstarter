@@ -21,6 +21,7 @@ getUserPermissions uid = do
   perms <- runDB $ E.select 
     $ E.from $ \(E.InnerJoin userpermission permission) -> do 
       E.where_ $ userpermission ^. UserPermissionUser E.==. (E.val uid)
+      E.where_ $ permission ^. PermissionUserAddable E.==. (E.val True)
       E.on $ userpermission ^. UserPermissionPermission E.==. permission ^. PermissionId
       E.orderBy $ [E.asc ( permission ^. PermissionName )]
       return 

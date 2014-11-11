@@ -31,6 +31,7 @@ Ledger
 Permission
     name Text
     description Text Maybe
+    userAddable Bool
     PermissionUniqueName name
 UserPermission
     user UserId
