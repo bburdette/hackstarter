@@ -1,11 +1,14 @@
 module Handler.Ledger where
 
 import Import
+import Permissions
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 
 getLedgerR :: Handler Html
 getLedgerR = do
+  logid <- requireAuthId
+  admin <- isAdmin logid
   mahsum <- runDB $ E.select 
     $ E.from $ \lolwut -> do 
       let sumamt = (E.sum_ (lolwut ^. LedgerAmount))

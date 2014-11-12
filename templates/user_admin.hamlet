@@ -21,4 +21,4 @@
   ^{permWidget}
   <input type=submit value="add permission">
 
-
+<a href=@{AddLedgerEntryR userId}> add ledger entry 
