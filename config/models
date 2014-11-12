@@ -27,6 +27,7 @@ DuesRate
 Ledger
     user UserId
     amount Int
+    creator UserId
     date UTCTime default=CURRENT_TIMESTAMP
 Permission
     name Text
