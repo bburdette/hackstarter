@@ -14,7 +14,6 @@ getLedgerR = do
                 [E.Value (Just amt)] -> amt
                 _ -> 0 :: Int
    in do
-  --let summ = amt :: Int in do
     ledges <- runDB $ E.select 
       $ E.from $ \(E.InnerJoin user ledger) -> do 
         E.on $ user ^. UserId E.==. ledger ^. LedgerUser
