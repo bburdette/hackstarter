@@ -14,4 +14,4 @@ Hacker name: #{userIdent user}
   ^{permWidget}
   <input type=submit value="add permission">
 
-
+<a href=@{UserTransactionsR userId}> show ledger entries

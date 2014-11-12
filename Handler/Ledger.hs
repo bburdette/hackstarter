@@ -25,7 +25,8 @@ getLedgerR = do
           ( user ^. UserId,
             user ^. UserIdent, 
             ledger ^. LedgerAmount,
-            ledger ^. LedgerDate ) 
+            ledger ^. LedgerDate,
+            ledger ^. LedgerCreator ) 
     defaultLayout $ do 
       [whamlet| 
         <h4> Ledger
@@ -34,11 +35,12 @@ getLedgerR = do
             <th> User 
             <th> Amount 
             <th> Datetime
-          $forall (E.Value usrId, E.Value usrident, E.Value amount, E.Value datetime) <- ledges
+          $forall (E.Value usrId, E.Value usrident, E.Value amount, E.Value datetime, E.Value creator) <- ledges
             <tr>
               <td> #{ usrident }
               <td> #{ show amount }
               <td> #{show $ datetime}
+              <td> #{show $ creator}
           <br> Sum of transactions: #{show summ}
       |]
 
