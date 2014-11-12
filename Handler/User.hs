@@ -7,7 +7,10 @@ import Data.Time.Clock
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 
-getUserPermissions :: UserId -> Handler [(E.Value (KeyBackend E.SqlBackend Permission), E.Value Text)]
+getUserPermissions :: UserId -> 
+  Handler [(E.Value (KeyBackend E.SqlBackend Permission), 
+            E.Value (KeyBackend E.SqlBackend UserPermission), 
+            E.Value Text)]
 getUserPermissions uid = do 
   perms <- runDB $ E.select 
     $ E.from $ \(E.InnerJoin userpermission permission) -> do 
@@ -16,6 +19,7 @@ getUserPermissions uid = do
       E.orderBy $ [E.asc ( permission ^. PermissionName )]
       return 
         ( permission ^. PermissionId,
+          userpermission ^. UserPermissionId,
           permission ^. PermissionName ) 
   return perms
 

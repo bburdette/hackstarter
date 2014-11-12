@@ -5,7 +5,7 @@ Hacker name: #{userIdent user}
 <table>
   <tr>
     <th> Permissions
-  $forall (E.Value pid, E.Value pname) <- userperms
+  $forall (E.Value pid, E.Value upid, E.Value pname) <- userperms
     <tr>
       <td> 
         <a href=@{PermissionR pid}> #{pname}

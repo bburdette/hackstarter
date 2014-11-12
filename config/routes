@@ -20,3 +20,4 @@
 /permissions PermissionsR GET POST
 /permission/#PermissionId PermissionR GET POST
 /login LoginTestR GET POST
+/userpermission/delete/#UserPermissionId UserPermissionDeleteR POST
