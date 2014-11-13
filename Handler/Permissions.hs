@@ -15,7 +15,6 @@ getPermissionsR = do
 getPermissionsAdminR :: Handler Html
 getPermissionsAdminR = do
   perms <- runDB $ selectList [] []
-  (perform, enctype) <- generateFormPost $ permissionForm Nothing
   defaultLayout $ [whamlet|
     <table>
       <tr>
@@ -24,10 +23,7 @@ getPermissionsAdminR = do
         <tr>
           <td> 
              <a href=@{PermissionR pid}> #{ permissionName perm }
-    <h4>add permission
-    <form method=post enctype=#{enctype}>
-      ^{perform}
-      <input type=submit value=add>
+    <a href=@{AddPermissionR} > add new permission
     |]
 
 getPermissionsRoR :: Handler Html
@@ -44,6 +40,8 @@ getPermissionsRoR = do
     |]
 
 postPermissionsR :: Handler Html
+postPermissionsR = error "unimplemented"
+{-
 postPermissionsR = do
   loguid <- requireAuthId
   admin <- isAdmin loguid
@@ -56,4 +54,4 @@ postPermissionsR = do
           permID <- runDB $ insert perm
           redirect PermissionsR
         _ -> defaultLayout [whamlet|fale!|]
-
+-}

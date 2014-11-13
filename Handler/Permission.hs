@@ -16,6 +16,7 @@ getPermissionAdminR pid = do
       users <- getPermissionUsers pid
       (pwidget, enctype) <- generateFormPost $ permissionForm mbperm
       defaultLayout $ [whamlet|
+      <h3> Edit permission
       <form method=post enctype=#{enctype}>
         ^{pwidget}
         <input type=submit value=Ok>
