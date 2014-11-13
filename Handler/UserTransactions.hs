@@ -28,7 +28,16 @@ getUserTransactionsR uid = do
       case mbusr of 
         Nothing -> error "invalid user id"
         Just usr -> do 
-          ledges <- runDB $ selectList [LedgerUser ==. uid] []
+          ledges <- runDB $ E.select 
+            $ E.from $ \(E.InnerJoin user ledger) -> do 
+              E.where_ $ ledger ^. LedgerUser E.==. (E.val uid)
+              E.on $ user ^. UserId E.==. ledger ^. LedgerCreator
+              E.orderBy $ [E.asc ( ledger ^. LedgerDate)]
+              return 
+                ( ledger ^. LedgerAmount,
+                  ledger ^. LedgerDate,
+                  ledger ^. LedgerCreator,
+                  user ^. UserIdent ) 
           defaultLayout $ do
             [whamlet| 
               <h3> transactions for user: 
@@ -43,11 +52,11 @@ getUserTransactionsR uid = do
                   <th> amount
                   <th> datetime
                   <th> created by
-                $forall (Entity key ledge) <- ledges
+                $forall (E.Value amount, E.Value datetime, E.Value creatorid, E.Value creatorIdent) <- ledges
                   <tr>
-                    <td> #{ledgerAmount ledge} 
-                    <td> #{show $ ledgerDate ledge}
-                    <td> #{show $ ledgerCreator ledge}
+                    <td> #{amount}
+                    <td> #{show datetime}
+                    <td> #{creatorIdent}
              |]
 
 postUserTransactionsR :: UserId -> Handler Html
