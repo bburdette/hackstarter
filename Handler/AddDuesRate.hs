@@ -7,7 +7,7 @@ getAddDuesRateR :: Handler Html
 getAddDuesRateR = do 
   (drWidget, enctype) <- generateFormPost $ duesRateForm Nothing
   defaultLayout $ [whamlet|
-    <h2>Add a dues rate:
+    <h3>Add a dues rate:
     <form method=post enctype=#{enctype}>
       ^{drWidget}
       <input type=submit value=ok>|]

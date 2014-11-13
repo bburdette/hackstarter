@@ -64,20 +64,23 @@ instance Yesod App where
     defaultLayout widget = do
         master <- getYesod
         mmsg <- getMessage
+        mbauth <- maybeAuth
+        let logname = maybe "" (\(Entity uid usr) -> userIdent usr) mbauth 
+          in do
+        
+            -- We break up the default layout into two components:
+            -- default-layout is the contents of the body tag, and
+            -- default-layout-wrapper is the entire page. Since the final
+            -- value passed to hamletToRepHtml cannot be a widget, this allows
+            -- you to use normal widget features in default-layout.
 
-        -- We break up the default layout into two components:
-        -- default-layout is the contents of the body tag, and
-        -- default-layout-wrapper is the entire page. Since the final
-        -- value passed to hamletToRepHtml cannot be a widget, this allows
-        -- you to use normal widget features in default-layout.
-
-        pc <- widgetToPageContent $ do
-            $(combineStylesheets 'StaticR
-                [ css_normalize_css
-                , css_bootstrap_css
-                ])
-            $(widgetFile "default-layout")
-        giveUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
+            pc <- widgetToPageContent $ do
+                $(combineStylesheets 'StaticR
+                    [ css_normalize_css
+                    , css_bootstrap_css
+                    ])
+                $(widgetFile "default-layout")
+            giveUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
 
     -- This is done to provide an optimization for serving static files from
     -- a separate domain. Please see the staticRoot setting in Settings.hs

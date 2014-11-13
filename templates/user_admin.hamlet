@@ -1,4 +1,4 @@
-<h1> User Maintenance
+<h3> User Maintenance
 <br> Greetings, administrator.
 <form method=post enctype=#{formEnctype}>
   ^{formWidget}

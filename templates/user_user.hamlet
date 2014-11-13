@@ -1,4 +1,4 @@
-<h1> User Maintenance
+<h3> User Maintenance
 Hacker name: #{userIdent user}
 <br>member since: #{show (userCreatedate user)}
 

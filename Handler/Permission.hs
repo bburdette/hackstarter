@@ -60,13 +60,11 @@ postPermissionR :: PermissionId -> Handler Html
 postPermissionR pid = do
   loguid <- requireAuthId
   admin <- isAdmin loguid
-  case admin of 
-    False -> error "not authorized"
-    True -> do  
-      ((res,_),enctype) <- runFormPost $ permissionForm Nothing
-      case res of 
-        FormSuccess perm -> do 
-          runDB $ replace pid perm
-          redirect PermissionsR
-        _ -> error "record edit failed"
-      
+  requireAdmin admin
+  ((res,_),enctype) <- runFormPost $ permissionForm Nothing
+  case res of 
+    FormSuccess perm -> do 
+      runDB $ replace pid perm
+      redirect PermissionsR
+    _ -> error "record edit failed"
+        

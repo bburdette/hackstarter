@@ -1,1 +1,2 @@
-Hello: Hello
+Hello: Greetings
+HackerSpace: Solid State Depot

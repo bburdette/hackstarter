@@ -47,6 +47,12 @@ isAdmin :: UserId -> Handler Bool
 isAdmin uid = do 
   pid <- getPermissionId "admin"
   maybe (return False) (hasPermission uid) pid
+
+requireAdmin :: Bool -> Handler ()
+requireAdmin admin = 
+  case admin of 
+    True -> return ()
+    False -> redirect HomeR
  
 {- 
 getPermissionUsers :: PermissionId -> 
