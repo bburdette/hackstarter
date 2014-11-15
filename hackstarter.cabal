@@ -41,6 +41,7 @@ library
                      Handler.LoginTest
                      Handler.UserPermissionDelete
                      Handler.AddPermission
+                     Handler.Utilities
                      Permissions
 
     if flag(dev) || flag(library-only)
@@ -92,6 +93,7 @@ library
                  , transformers
                  , esqueleto
                  , time
+                 , conduit-extra
 
 executable         hackstarter
     if flag(library-only)

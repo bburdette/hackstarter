@@ -22,3 +22,4 @@
 /login LoginTestR GET POST
 /userpermission/delete/#UserPermissionId UserPermissionDeleteR POST
 /addpermission/ AddPermissionR GET POST
+/utilities/ UtilitiesR GET POST
