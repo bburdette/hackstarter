@@ -3,15 +3,17 @@ module Handler.Utilities where
 import Import
 import System.IO
 import Data.Conduit
-import Data.ByteString
-import qualified Data.Conduit.List as CL
-import qualified Data.Conduit.Binary as CB
+import qualified Data.Text as T
+
+sampleForm :: Form (FileInfo, Text)
+sampleForm = renderDivs $ (,)
+    <$> fileAFormReq "Upload paypal transaction file:"
+    <*> areq textField "Save as: " Nothing
 
 getUtilitiesR :: Handler Html
 getUtilitiesR = do
     (formWidget, formEnctype) <- generateFormPost sampleForm
     let submission = Nothing :: Maybe (FileInfo, Text)
-        handlerName = "getUtilitiesR" :: Text
     defaultLayout $ do
         aDomId <- newIdent
         setTitle "Welcome To Yesod!"
@@ -20,10 +22,6 @@ getUtilitiesR = do
             ^{formWidget}
             <input type=submit value="upload">
         |]
-
-mahsink :: Sink ByteString IO ()
-mahsink = CL.mapM_ Data.ByteString.putStrLn
-
 
 postUtilitiesR :: Handler Html
 postUtilitiesR = do
@@ -34,11 +32,7 @@ postUtilitiesR = do
           FormMissing -> error "form missing??"
           FormFailure meh -> error $ show meh
           FormSuccess (fi,txt) -> do
-            -- blah <- openFile txt WriteMode
-            -- liftIO $ writeFile (unpack txt) (fileSource fi)
-            -- lift $ (fileSource fi) =$ mahsink
-            -- lift $ (fileSource fi) =$ (CB.sinkFile "tst.txt")
-            lift $ fileMove fi "yeah.txt" 
+            lift $ fileMove fi (T.unpack txt)
             defaultLayout $ do
               aDomId <- newIdent
               setTitle "Welcome To Yesod!"
@@ -46,10 +40,5 @@ postUtilitiesR = do
                 we wrote eet!
               |]
            
-
-sampleForm :: Form (FileInfo, Text)
-sampleForm = renderDivs $ (,)
-    <$> fileAFormReq "Choose a file"
-    <*> areq textField "What's on the file?" Nothing
 
 

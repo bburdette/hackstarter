@@ -93,7 +93,7 @@ library
                  , transformers
                  , esqueleto
                  , time
-                 , conduit-extra
+                 , csv
 
 executable         hackstarter
     if flag(library-only)
