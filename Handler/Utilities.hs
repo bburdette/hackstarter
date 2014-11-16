@@ -4,6 +4,9 @@ import Import
 import System.IO
 import Data.Conduit
 import qualified Data.Text as T
+import System.Directory
+
+paypalDir = "paypals"
 
 sampleForm :: Form (FileInfo, Text)
 sampleForm = renderDivs $ (,)
@@ -32,7 +35,8 @@ postUtilitiesR = do
           FormMissing -> error "form missing??"
           FormFailure meh -> error $ show meh
           FormSuccess (fi,txt) -> do
-            lift $ fileMove fi (T.unpack txt)
+            lift $ createDirectory paypalDir
+            lift $ fileMove fi $ paypalDir ++ "//" ++ (T.unpack txt)
             defaultLayout $ do
               aDomId <- newIdent
               setTitle "Welcome To Yesod!"
