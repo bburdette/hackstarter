@@ -25,11 +25,13 @@ DuesRate
     amount Int
     UniqueDuesRate name
 Ledger
+    transactionid Text Maybe
     user UserId Maybe
     email EmailId Maybe
     amount Int
     creator UserId
     date UTCTime default=CURRENT_TIMESTAMP
+    UniqueTransactionId transactionid !force
 Permission
     name Text
     description Text Maybe

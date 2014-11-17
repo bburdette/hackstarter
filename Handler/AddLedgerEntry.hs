@@ -43,6 +43,6 @@ postAddLedgerEntryR uid = do
       case result of 
         FormSuccess nle -> do 
           now <- lift getCurrentTime
-          blah <- runDB $ insert $ Ledger (Just uid) Nothing (amount nle) logid now
+          blah <- runDB $ insert $ Ledger Nothing (Just uid) Nothing (amount nle) logid now
           redirect $ UserTransactionsR uid 
         _ -> error "fail"
