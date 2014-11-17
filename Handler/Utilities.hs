@@ -55,7 +55,6 @@ data Transaction = Transaction
   }
   deriving Show
 
--- ppToTransaction :: (M.Map String String) -> Maybe UTCTime
 ppToTransaction :: (M.Map String String) -> Maybe Transaction
 ppToTransaction mp = do
   date <- M.lookup "Date" mp 
@@ -69,8 +68,6 @@ ppToTransaction mp = do
   email <- fmap T.pack $ M.lookup "From Email Address" mp
   transactionId <- fmap T.pack $ M.lookup "Transaction ID" mp
   Just $ Transaction datetime name amount email transactionId
-
--- updateFromPaypal [(Map String String)]
 
 postUtilitiesR :: Handler Html
 postUtilitiesR = do

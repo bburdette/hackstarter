@@ -95,6 +95,7 @@ library
                  , time
                  , csv
                  , containers
+                 , old-locale
 
 executable         hackstarter
     if flag(library-only)
