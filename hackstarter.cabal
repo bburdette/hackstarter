@@ -94,6 +94,7 @@ library
                  , esqueleto
                  , time
                  , csv
+                 , containers
 
 executable         hackstarter
     if flag(library-only)
