@@ -7,6 +7,10 @@ import Data.Time.Clock
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 
+getUserEmails :: UserId -> Handler [Entity Email]
+getUserEmails uid = do 
+  runDB $ selectList [EmailUser ==. Just uid] []
+
 getUserPermissions :: UserId -> 
   Handler [(E.Value (KeyBackend E.SqlBackend Permission), 
             E.Value (KeyBackend E.SqlBackend UserPermission), 
@@ -76,6 +80,7 @@ getUserAdminR logid userId = do
   duesrates <- getDuesRates
   addpermissions <- getPermAddList logid admin 
   userperms <- getUserPermissions userId
+  useremails <- getUserEmails userId
   case mbUser of 
     Nothing -> error "user id not found."
     Just user -> do 

@@ -15,10 +15,16 @@ import System.Locale
 
 paypalDir = "paypals"
 
+sampleForm :: Form FileInfo
+sampleForm = renderDivs $ 
+    fileAFormReq "Upload paypal transaction file:"
+
+{-
 sampleForm :: Form (FileInfo, Text)
 sampleForm = renderDivs $ (,)
     <$> fileAFormReq "Upload paypal transaction file:"
     <*> areq textField "Save as: " Nothing
+-}
 
 getUtilitiesR :: Handler Html
 getUtilitiesR = do
@@ -77,10 +83,10 @@ postUtilitiesR = do
         case result of
           FormMissing -> error "form missing??"
           FormFailure meh -> error $ show meh
-          FormSuccess (fi,txt) -> do
+          FormSuccess fi -> do
             lift $ createDirectoryIfMissing True paypalDir
             now <- lift $ getCurrentTime
-            let fname = paypalDir ++ "//paypal" ++ (show now)-- (T.unpack txt)
+            let fname = paypalDir ++ "//paypal" ++ (show now)
             lift $ fileMove fi fname
             recs <- lift $ parsePaypal fname
             defaultLayout $ do

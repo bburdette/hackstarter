@@ -43,7 +43,6 @@ postAddLedgerEntryR uid = do
       case result of 
         FormSuccess nle -> do 
           now <- lift getCurrentTime
-          blah <- runDB $ insert $ Ledger uid (amount nle) logid now
-          defaultLayout $ do
-            [whamlet|insert result: #{show blah}|]
+          blah <- runDB $ insert $ Ledger (Just uid) Nothing (amount nle) logid now
+          redirect $ UserTransactionsR uid 
         _ -> error "fail"

@@ -25,7 +25,8 @@ DuesRate
     amount Int
     UniqueDuesRate name
 Ledger
-    user UserId
+    user UserId Maybe
+    email EmailId Maybe
     amount Int
     creator UserId
     date UTCTime default=CURRENT_TIMESTAMP
