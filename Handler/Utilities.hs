@@ -104,7 +104,7 @@ data Transaction = Transaction
 -- version where we create user accounts if they don't exist.
 
 -- version where we don't create user accounts.
-addTransaction :: UserId -> Transaction -> Handler (Key Ledger)
+addTransaction :: UserId -> Transaction -> Handler (Maybe (Key Ledger))
 addTransaction creator trans = do 
   mbemail <- runDB $ getBy $ UniqueEmail (email trans)
   Entity ekey eml <- case mbemail of 
@@ -113,7 +113,7 @@ addTransaction creator trans = do
               key <- runDB $ insert eml
               return (Entity key eml) 
             Just eml -> return eml
-  runDB $ insert $ 
+  runDB $ insertUnique $ 
     Ledger (Just (transactionId trans))
            (emailUser eml)
            (Just ekey)
@@ -141,14 +141,15 @@ postUtilitiesR = do
           keys <- mapM (addTransaction logid) transes 
           let lrecs = length recs
               ltranses = length transes
-              lkeys = length keys
+              lkeys = length (MB.catMaybes keys)
           defaultLayout $ do
             aDomId <- newIdent
             setTitle "Yeeaaaahhh!"
             [whamlet|
               <br> #{show lrecs} records found in file.
               <br> #{show ltranses} records being valid-looking transactions.found in file.
-              we wrote #{show lkeys} transaction records.
+              <br> we wrote #{show lkeys} transaction records.  
+              <br> records with duplicate transaction IDs are skipped.
             |]
          
 
