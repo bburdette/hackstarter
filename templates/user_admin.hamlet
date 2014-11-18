@@ -21,6 +21,18 @@
   ^{permWidget}
   <input type=submit value="add permission">
 
-<a href=@{UserTransactionsR userId}> show ledger entries
-<br>
-<a href=@{AddLedgerEntryR userId}> add ledger entry 
+<table>
+  <tr>
+    <th> Ledger
+  <tr> <td> <a href=@{UserTransactionsR userId}> show ledger entries
+  <tr> <td> <a href=@{AddLedgerEntryR userId}> add ledger entry 
+
+<table>
+  <tr>
+    <th> Emails
+  $forall (Entity eid eml) <- useremails
+    <tr>
+      <td>
+        #{ emailEmail eml } 
+
+

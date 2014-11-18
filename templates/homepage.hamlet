@@ -13,5 +13,7 @@
   <li> Look at the 
     <a href=@{PermissionsR}> permissions 
   <li> Look at the 
+    <a href=@{EmailsR}> emails 
+  <li> Look at the 
     <a href=@{UtilitiesR}> utilities 
 
