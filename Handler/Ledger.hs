@@ -40,10 +40,10 @@ getLedgerR = do
             <th> Creator
           $forall (E.Value usrId, E.Value usrident, E.Value amount, E.Value datetime, E.Value creator, E.Value creatorIdent) <- ledges
             <tr>
-              <td> #{ show usrident }
+              <td> #{ maybe "" id usrident }
               <td> #{ show amount }
               <td> #{ show datetime}
-              <td> #{ show creatorIdent }
+              <td> #{ creatorIdent }
           <br> Sum of transactions: #{show summ}
       |]
 
