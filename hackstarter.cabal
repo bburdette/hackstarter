@@ -43,6 +43,7 @@ library
                      Handler.AddPermission
                      Handler.Utilities
                      Handler.Emails
+                     Handler.AddEmail
                      Permissions
 
     if flag(dev) || flag(library-only)

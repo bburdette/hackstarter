@@ -54,6 +54,19 @@ requireAdmin uid = do
     True -> return ()
     False -> redirect HomeR
 
+requireBool :: Bool -> Handler ()
+requireBool b = do
+  case b of  
+    True -> return ()
+    False -> redirect HomeR
+
+{-
+requireBool :: (MonadHandler m, RedirectUrl (HandlerSite m) url) => Bool -> url -> m a 
+requireBool boole url = do
+  case boole of 
+    True -> return 
+    False -> redirect url
+-}
 
 {- 
 getPermissionUsers :: PermissionId -> 

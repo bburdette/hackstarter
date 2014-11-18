@@ -24,3 +24,4 @@
 /addpermission/ AddPermissionR GET POST
 /utilities/ UtilitiesR GET POST
 /emails/ EmailsR GET POST
+/addemail/#UserId AddEmailR GET POST

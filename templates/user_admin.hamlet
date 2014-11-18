@@ -35,4 +35,5 @@
       <td>
         #{ emailEmail eml } 
 
+<a href=@{AddEmailR userId}> add email
 
