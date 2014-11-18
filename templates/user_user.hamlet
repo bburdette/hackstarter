@@ -15,3 +15,12 @@ Hacker name: #{userIdent user}
   <input type=submit value="add permission">
 
 <a href=@{UserTransactionsR userId}> show ledger entries
+
+<table>
+  <tr>
+    <th> Emails
+  $forall (Entity eid eml) <- useremails
+    <tr>
+      <td>
+        #{ emailEmail eml } 
+

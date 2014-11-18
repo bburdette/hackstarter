@@ -17,4 +17,12 @@
       <td> 
         <a href="#" onClick="post('@{UserPermissionDeleteR upid}', {})"> remove
 
+<table>
+  <tr>
+    <th> Emails
+  $forall (Entity eid eml) <- useremails
+    <tr>
+      <td>
+        #{ emailEmail eml } 
+
 

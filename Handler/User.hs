@@ -99,6 +99,7 @@ getUserUserR logid userId = do
   duesrates <- getDuesRates
   addpermissions <- getPermAddList logid admin 
   userperms <- getUserPermissions userId
+  useremails <- getUserEmails userId
   case mbUser of 
     Nothing -> error "user id not found."
     Just user -> do 
@@ -114,6 +115,7 @@ getUserSelfR userId = do
   mbUser <- runDB $ get userId
   curtime <- lift getCurrentTime
   userperms <- getUserPermissions userId
+  useremails <- getUserEmails userId
   case mbUser of 
     Nothing -> error "user id not found."
     Just user -> do 
