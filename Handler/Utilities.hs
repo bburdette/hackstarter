@@ -147,9 +147,9 @@ postUtilitiesR = do
             setTitle "Yeeaaaahhh!"
             [whamlet|
               <br> #{show lrecs} records found in file.
-              <br> #{show ltranses} records being valid-looking transactions.found in file.
+              <br> #{show ltranses} records being valid-looking transactions.
               <br> we wrote #{show lkeys} transaction records.  
-              <br> records with duplicate transaction IDs are skipped.
+              <br> records with transaction IDs already in the database are skipped.
             |]
          
 
