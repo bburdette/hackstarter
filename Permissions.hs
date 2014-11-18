@@ -2,7 +2,6 @@ module Permissions where
 
 import Import
 import Data.Time.Clock
-
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 
@@ -48,12 +47,14 @@ isAdmin uid = do
   pid <- getPermissionId "admin"
   maybe (return False) (hasPermission uid) pid
 
-requireAdmin :: Bool -> Handler ()
-requireAdmin admin = 
+requireAdmin :: UserId -> Handler ()
+requireAdmin uid = do
+  admin <- isAdmin uid
   case admin of 
     True -> return ()
     False -> redirect HomeR
- 
+
+
 {- 
 getPermissionUsers :: PermissionId -> 
   Handler [(E.Value (KeyBackend E.SqlBackend User), E.Value Text)]

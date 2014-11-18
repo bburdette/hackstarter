@@ -59,8 +59,7 @@ getPermissionRoR pid = do
 postPermissionR :: PermissionId -> Handler Html
 postPermissionR pid = do
   loguid <- requireAuthId
-  admin <- isAdmin loguid
-  requireAdmin admin
+  requireAdmin loguid 
   ((res,_),enctype) <- runFormPost $ permissionForm Nothing
   case res of 
     FormSuccess perm -> do 
