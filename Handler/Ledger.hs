@@ -8,7 +8,7 @@ import           Database.Esqueleto      ((^.))
 getLedgerR :: Handler Html
 getLedgerR = do
   logid <- requireAuthId
-  admin <- isAdmin logid
+  requireAdmin logid
   mahsum <- runDB $ E.select 
     $ E.from $ \lolwut -> do 
       let sumamt = (E.sum_ (lolwut ^. LedgerAmount))
@@ -18,13 +18,13 @@ getLedgerR = do
                 _ -> 0 :: Int
    in do
     ledges <- runDB $ E.select 
-      $ E.from $ \(E.InnerJoin (E.InnerJoin user ledger) usercreator) -> do 
-        E.on $ E.just (user ^. UserId) E.==. ledger ^. LedgerUser
+      $ E.from $ \(E.InnerJoin (E.LeftOuterJoin ledger user) usercreator) -> do 
         E.on $ usercreator ^. UserId E.==. ledger ^. LedgerCreator
+        E.on $ (ledger ^. LedgerUser E.==. user E.?. UserId) 
         E.orderBy $ [E.asc ( ledger ^. LedgerDate)]
         return 
-          ( user ^. UserId,
-            user ^. UserIdent, 
+          ( user E.?. UserId,
+            user E.?. UserIdent,
             ledger ^. LedgerAmount,
             ledger ^. LedgerDate,
             ledger ^. LedgerCreator,
@@ -40,10 +40,10 @@ getLedgerR = do
             <th> Creator
           $forall (E.Value usrId, E.Value usrident, E.Value amount, E.Value datetime, E.Value creator, E.Value creatorIdent) <- ledges
             <tr>
-              <td> #{ usrident }
+              <td> #{ show usrident }
               <td> #{ show amount }
-              <td> #{show $ datetime}
-              <td> #{ creatorIdent }
+              <td> #{ show datetime}
+              <td> #{ show creatorIdent }
           <br> Sum of transactions: #{show summ}
       |]
 
