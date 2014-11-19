@@ -19,7 +19,7 @@ paypalDir = "paypals"
 
 sampleForm :: Form FileInfo
 sampleForm = renderDivs $ 
-    fileAFormReq "Upload paypal transaction file:"
+    fileAFormReq "Upload (UTF-8) paypal transaction file:"
 
 {-
 sampleForm :: Form (FileInfo, Text)
@@ -36,7 +36,7 @@ getUtilitiesR = do
   let submission = Nothing :: Maybe (FileInfo, Text)
   defaultLayout $ do
       aDomId <- newIdent
-      setTitle "Welcome To Yesod!"
+      setTitle "admin utilities"
       [whamlet|
         <form method=post enctype=#{formEnctype}>
           ^{formWidget}
