@@ -18,8 +18,9 @@ getLedgerR = do
                 _ -> 0 :: Int
    in do
     ledges <- runDB $ E.select 
-      $ E.from $ \(E.InnerJoin (E.LeftOuterJoin ledger user) usercreator) -> do 
+      $ E.from $ \(E.InnerJoin (E.LeftOuterJoin (E.LeftOuterJoin ledger user) email) usercreator) -> do 
         E.on $ usercreator ^. UserId E.==. ledger ^. LedgerCreator
+        E.on $ (ledger ^. LedgerEmail E.==. email E.?. EmailId) 
         E.on $ (ledger ^. LedgerUser E.==. user E.?. UserId) 
         E.orderBy $ [E.asc ( ledger ^. LedgerDate)]
         return 
@@ -28,6 +29,7 @@ getLedgerR = do
             ledger ^. LedgerAmount,
             ledger ^. LedgerDate,
             ledger ^. LedgerCreator,
+            email E.?. EmailEmail,
             usercreator ^. UserIdent ) 
     defaultLayout $ do 
       [whamlet| 
@@ -37,12 +39,14 @@ getLedgerR = do
             <th> User 
             <th> Amount 
             <th> Datetime
+            <th> Email 
             <th> Creator
-          $forall (E.Value usrId, E.Value usrident, E.Value amount, E.Value datetime, E.Value creator, E.Value creatorIdent) <- ledges
+          $forall (E.Value usrId, E.Value usrident, E.Value amount, E.Value datetime, E.Value creator, E.Value emailtxt, E.Value creatorIdent) <- ledges
             <tr>
               <td> #{ maybe "" id usrident }
               <td> #{ show amount }
               <td> #{ show datetime}
+              <td> #{ maybe "" id emailtxt }
               <td> #{ creatorIdent }
           <br> Sum of transactions: #{show summ}
       |]
