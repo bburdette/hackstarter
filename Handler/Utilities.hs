@@ -102,6 +102,26 @@ data Transaction = Transaction
   deriving Show
 
 -- version where we create user accounts if they don't exist.
+-- uh oh, user idents are sposed to be unique!!
+addTransactionWUser :: UserId -> DuesRateId -> Transaction -> Handler (Maybe (Key Ledger))
+addTransactionWUser creator defaultdr trans = do 
+  mbemail <- runDB $ getBy $ UniqueEmail (email trans)
+  Entity ekey eml <- case mbemail of 
+            Nothing -> do
+              now <- lift getCurrentTime
+              ukey <- runDB $ insert $ User (name trans) Nothing defaultdr 0 (utctDay now)
+              let eml = Email (email trans) (Just ukey) Nothing
+              key <- runDB $ insert eml
+              return (Entity key eml) 
+            Just eml -> return eml
+  runDB $ insertUnique $ 
+    Ledger (Just (transactionId trans))
+           (emailUser eml)
+           (Just ekey)
+           (amount trans)
+           creator
+           (dateTime trans)
+
 
 -- version where we don't create user accounts.
 addTransaction :: UserId -> Transaction -> Handler (Maybe (Key Ledger))
@@ -121,10 +141,19 @@ addTransaction creator trans = do
            creator
            (dateTime trans)
 
+unMaybe :: Maybe a -> Handler a
+unMaybe mba = 
+  case mba of 
+    Just mba -> return mba
+    Nothing -> error "nothing"
+
+
 postUtilitiesR :: Handler Html
 postUtilitiesR = do
   logid <- requireAuthId
-  requireAdmin logid 
+  requireAdmin logid
+  mbdrid <- checkDuesRate "default" 0
+  drid <- unMaybe mbdrid
   ((result, formWidget), formEnctype) <- runFormPost sampleForm
   let handlerName = "postUtilitiesR" :: Text
     in do
@@ -138,7 +167,7 @@ postUtilitiesR = do
           lift $ fileMove fi fname
           recs <- lift $ parsePaypal fname
           let transes = (MB.catMaybes (map ppToTransaction recs))
-          keys <- mapM (addTransaction logid) transes 
+          keys <- mapM (addTransactionWUser logid drid) transes 
           let lrecs = length recs
               ltranses = length transes
               lkeys = length (MB.catMaybes keys)
