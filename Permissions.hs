@@ -137,7 +137,7 @@ checkAdmin = do
           case mbdrid of 
             Just drid -> do 
               curtime <- lift getCurrentTime
-              uid <- runDB $ insert $ User "admin" Nothing drid 0 (utctDay curtime)
+              uid <- runDB $ insert $ User "admin" "" Nothing drid 0 (utctDay curtime)
               upid <- runDB $ insert $ UserPermission uid pid uid
               return $ Just uid
             _ -> return Nothing

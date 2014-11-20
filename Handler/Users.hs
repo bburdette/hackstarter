@@ -14,6 +14,7 @@ getUsersAdminR = do
       return 
         ( user ^. UserId,
           user ^. UserIdent, 
+          user ^. UserName, 
           duesRate ^. DuesRateName, 
           duesRate ^. DuesRateAmount ) 
   defaultLayout $ do

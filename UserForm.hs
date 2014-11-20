@@ -25,7 +25,8 @@ ornow curday mbuser =
 
 userFormSelf :: User -> Form User 
 userFormSelf user = renderDivs $ User 
-  <$> areq textField "name" (Just $ userIdent user)
+  <$> areq textField "handle" (Just $ userIdent user)
+  <*> areq textField "name" (Just $ userName user)
   <*> aopt passwordField "Pwd" (Just $ userPassword user)
   <*> pure (userDuesrate user)
   <*> areq intField ("balance" { fsAttrs = [("readonly", "")] }) (Just $ userBalance user) 
@@ -34,7 +35,8 @@ userFormSelf user = renderDivs $ User
 
 userFormAdmin :: Day -> [(Text, Key DuesRate)] -> Maybe User -> Form User 
 userFormAdmin curday duesrates user = renderDivs $ User 
-  <$> areq textField "name" (userIdent <$> user)
+  <$> areq textField "handle" (userIdent <$> user)
+  <*> areq textField "name" (userName <$> user)
   <*> aopt passwordField "Pwd" (userPassword <$> user)
   <*> areq (selectFieldList duesrates) "Dues rate" (userDuesrate <$> user)
   <*> areq intField ("balance" { fsAttrs = [("readonly", "")] }) (orzero user) 

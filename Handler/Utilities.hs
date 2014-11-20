@@ -41,6 +41,9 @@ getUtilitiesR = do
         <form method=post enctype=#{formEnctype}>
           ^{formWidget}
           <input type=submit value="upload">
+        In case of error: convert to UTF8 using vim like so:
+        <br> :set fileencoding=utf8
+        <br> :w <filename>
       |]
 
 parsePaypal :: FilePath -> IO [(M.Map String String)]
@@ -109,7 +112,7 @@ addTransactionWUser creator defaultdr trans = do
   Entity ekey eml <- case mbemail of 
             Nothing -> do
               now <- lift getCurrentTime
-              ukey <- runDB $ insert $ User (name trans) Nothing defaultdr 0 (utctDay now)
+              ukey <- runDB $ insert $ User (email trans) (name trans) Nothing defaultdr 0 (utctDay now)
               let eml = Email (email trans) (Just ukey) Nothing
               key <- runDB $ insert eml
               return (Entity key eml) 

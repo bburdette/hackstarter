@@ -1,5 +1,6 @@
 User
     ident Text
+    name Text
     password Text Maybe
     duesrate DuesRateId
     balance Int

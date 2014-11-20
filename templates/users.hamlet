@@ -1,12 +1,14 @@
 <h3> _{MsgHackerSpace} Hackers 
 <table> 
   <tr>
-    <th> User
+    <th> User ID
+    <th> Name
     <th> Dues Rate
     <th> Actions
-  $forall (E.Value usrId, E.Value usrident, E.Value drname, E.Value dramt) <- users
+  $forall (E.Value usrId, E.Value usrident, E.Value usrName, E.Value drname, E.Value dramt) <- users
     <tr> 
       <td> <a href=@{UserR usrId}> #{usrident} 
+      <td> #{usrName} 
       <td> #{drname} #{dramt}
       <td> 
         <a href=@{AddLedgerEntryR usrId}> add user transaction 
