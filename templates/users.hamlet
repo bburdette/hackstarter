@@ -4,15 +4,14 @@
     <th> User ID
     <th> Name
     <th> Dues Rate
-    <th> Actions
+    <th> 
   $forall (E.Value usrId, E.Value usrident, E.Value usrName, E.Value drname, E.Value dramt) <- users
     <tr> 
       <td> <a href=@{UserR usrId}> #{usrident} 
       <td> #{usrName} 
       <td> #{drname} #{dramt}
       <td> 
-        <a href=@{AddLedgerEntryR usrId}> add user transaction 
-        <a href=@{UserTransactionsR usrId}> show user transactions
+        <a href=@{UserTransactionsR usrId}> transactions
 
 <br>
 <a href=@{AddUserR}> Add a user
