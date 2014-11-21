@@ -1,5 +1,6 @@
 <h3> User Maintenance
-Hacker name: #{userIdent user}
+Hacker id: #{userIdent user}
+Name: #{userName user}
 <br>member since: #{show (userCreatedate user)}
 
 <table>
@@ -13,8 +14,6 @@ Hacker name: #{userIdent user}
 <form method=post enctype=#{permEnctype}>
   ^{permWidget}
   <input type=submit value="add permission">
-
-<a href=@{UserTransactionsR userId}> show ledger entries
 
 <table>
   <tr>

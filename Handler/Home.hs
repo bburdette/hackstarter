@@ -2,6 +2,7 @@
 module Handler.Home where
 
 import Import
+import Permissions
 
 -- This is a handler function for the GET request method on the HomeR
 -- resource pattern. All of your resource patterns are defined in
@@ -12,7 +13,8 @@ import Import
 -- inclined, or create a single monolithic file.
 getHomeR :: Handler Html
 getHomeR = do
-    _ <- requireAuthId
+    logid <- requireAuthId
+    isadmin <- isAdmin logid
     (formWidget, formEnctype) <- generateFormPost sampleForm
     let submission = Nothing :: Maybe (FileInfo, Text)
         handlerName = "getHomeR" :: Text
@@ -23,7 +25,8 @@ getHomeR = do
 
 postHomeR :: Handler Html
 postHomeR = do
-    _ <- requireAuthId
+    logid <- requireAuthId
+    isadmin <- isAdmin logid
     ((result, formWidget), formEnctype) <- runFormPost sampleForm
     let handlerName = "postHomeR" :: Text
         submission = case result of

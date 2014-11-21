@@ -1,8 +1,10 @@
 <h3> _{MsgHackerSpace} Hackers 
 <table> 
   <tr>
-    <th> User
+    <th> ID
+    <th> Name
   $forall Entity usrId usr <- users
     <tr> 
       <td> <a href=@{UserR usrId}> #{userIdent usr} 
+      <td> #{userName usr} 
 

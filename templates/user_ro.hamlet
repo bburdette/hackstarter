@@ -1,6 +1,7 @@
 <h1> Hacker Info
 
-Hacker name: #{userIdent user}
+Hacker id: #{userIdent user}
+Name: #{userName user}
 <br>member since: #{show (userCreatedate user)}
 
 
