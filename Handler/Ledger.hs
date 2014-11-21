@@ -20,8 +20,8 @@ getLedgerR = do
     ledges <- runDB $ E.select 
       $ E.from $ \(E.InnerJoin (E.LeftOuterJoin (E.LeftOuterJoin ledger user) email) usercreator) -> do 
         E.on $ usercreator ^. UserId E.==. ledger ^. LedgerCreator
-        E.on $ (ledger ^. LedgerEmail E.==. email E.?. EmailId) 
-        E.on $ (ledger ^. LedgerUser E.==. user E.?. UserId) 
+        E.on $ (ledger ^. LedgerFromemail E.==. email E.?. EmailId) 
+        E.on $ (ledger ^. LedgerFromuser E.==. user E.?. UserId) 
         E.orderBy $ [E.asc ( ledger ^. LedgerDate)]
         return 
           ( user E.?. UserId,

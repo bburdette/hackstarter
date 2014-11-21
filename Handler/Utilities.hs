@@ -69,9 +69,10 @@ ppToTransaction mp = do
   name <- fmap T.pack $ M.lookup "Name" mp 
   famount <- fmap (\x -> read (filter ((/=) ',') x)) $ M.lookup "Net" mp :: Maybe Float
   let amount = truncate $ famount * 100.0
-  email <- fmap T.pack $ M.lookup "From Email Address" mp
+  fromEmail <- fmap T.pack $ M.lookup "From Email Address" mp
+  toEmail <- fmap T.pack $ M.lookup "To Email Address" mp
   transactionId <- fmap T.pack $ M.lookup "Transaction ID" mp
-  Just $ Transaction datetime name amount email transactionId
+  Just $ Transaction datetime name amount fromEmail toEmail transactionId
 
 -- eppToTransaction :: (M.Map String String) -> Maybe UTCTime 
 eppToTransaction mp = ( 
@@ -99,7 +100,8 @@ data Transaction = Transaction
   { dateTime :: UTCTime
   , name :: Text
   , amount :: Int
-  , email :: Text
+  , fromEmail :: Text
+  , toEmail :: Text
   , transactionId :: Text
   }
   deriving Show
@@ -108,25 +110,48 @@ data Transaction = Transaction
 -- uh oh, user idents are sposed to be unique!!
 addTransactionWUser :: UserId -> DuesRateId -> Transaction -> Handler (Maybe (Key Ledger))
 addTransactionWUser creator defaultdr trans = do 
-  mbemail <- runDB $ getBy $ UniqueEmail (email trans)
-  Entity ekey eml <- case mbemail of 
-            Nothing -> do
-              now <- lift getCurrentTime
-              ukey <- runDB $ insert $ User (email trans) (name trans) Nothing defaultdr 0 (utctDay now)
-              let eml = Email (email trans) (Just ukey) Nothing
-              key <- runDB $ insert eml
-              return (Entity key eml) 
-            Just eml -> return eml
+  mbFromEmail <- runDB $ getBy $ UniqueEmail (fromEmail trans)
+  mbToEmail <- runDB $ getBy $ UniqueEmail (toEmail trans)
+  Entity ekey eml <- case mbFromEmail of 
+    Nothing -> do
+      now <- lift getCurrentTime
+      -- use email as user ident
+      ukey <- runDB $ insert $ User (fromEmail trans) (name trans) Nothing defaultdr 0 (utctDay now)
+      let eml = Email (fromEmail trans) (Just ukey) Nothing
+      key <- runDB $ insert eml
+      return (Entity key eml) 
+    Just (Entity ekey eml) -> 
+      -- if there's not a user record for the email, create one now.
+      case (emailUser eml) of 
+        Just _ -> return $ Entity ekey eml
+        Nothing -> do
+          -- use email as user ident
+          now <- lift getCurrentTime
+          ukey <- runDB $ insert $ User (fromEmail trans) (name trans) Nothing defaultdr 0 (utctDay now)
+          let eml2 = eml { emailUser = Just ukey } 
+          runDB $ replace ekey eml2 
+          return (Entity ekey eml2) 
+  Entity tekey teml <- case mbToEmail of 
+    -- add email records for 'to' emails, but not user accounts.
+    Nothing -> do
+      now <- lift getCurrentTime
+      let eml = Email (toEmail trans) Nothing Nothing
+      key <- runDB $ insert eml
+      return (Entity key eml) 
+    Just eml -> return eml
   runDB $ insertUnique $ 
     Ledger (Just (transactionId trans))
            (emailUser eml)
            (Just ekey)
+           (emailUser teml)
+           (Just tekey)
            (amount trans)
            creator
            (dateTime trans)
 
 
 -- version where we don't create user accounts.
+{-
 addTransaction :: UserId -> Transaction -> Handler (Maybe (Key Ledger))
 addTransaction creator trans = do 
   mbemail <- runDB $ getBy $ UniqueEmail (email trans)
@@ -143,6 +168,7 @@ addTransaction creator trans = do
            (amount trans)
            creator
            (dateTime trans)
+-}
 
 unMaybe :: Maybe a -> Handler a
 unMaybe mba = 

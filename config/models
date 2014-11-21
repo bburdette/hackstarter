@@ -27,8 +27,10 @@ DuesRate
     UniqueDuesRate name
 Ledger
     transactionid Text Maybe
-    user UserId Maybe
-    email EmailId Maybe
+    fromuser UserId Maybe
+    fromemail EmailId Maybe
+    touser UserId Maybe
+    toemail EmailId Maybe
     amount Int
     creator UserId
     date UTCTime default=CURRENT_TIMESTAMP
