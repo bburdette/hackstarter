@@ -11,7 +11,7 @@ getLedgerR = do
   requireAdmin logid
   mahsum <- runDB $ E.select 
     $ E.from $ \lolwut -> do 
-      let sumamt = (E.sum_ (lolwut ^. LedgerAmount))
+      let sumamt = (E.sum_ (lolwut ^. LedgerAmountGross))
       return sumamt
   let summ = case mahsum of 
                 [E.Value (Just amt)] -> amt
@@ -26,7 +26,8 @@ getLedgerR = do
         return 
           ( user E.?. UserId,
             user E.?. UserIdent,
-            ledger ^. LedgerAmount,
+            ledger ^. LedgerAmountGross,
+            ledger ^. LedgerAmountNet,
             ledger ^. LedgerDate,
             ledger ^. LedgerCreator,
             email E.?. EmailEmail,
@@ -37,14 +38,16 @@ getLedgerR = do
         <table class="ledgarrr">
           <tr>
             <th> User 
-            <th> Amount 
+            <th> Gross
+            <th> Net
             <th> Datetime
             <th> Email 
             <th> Creator
-          $forall (E.Value usrId, E.Value usrident, E.Value amount, E.Value datetime, E.Value creator, E.Value emailtxt, E.Value creatorIdent) <- ledges
+          $forall (E.Value usrId, E.Value usrident, E.Value gamount, E.Value namount, E.Value datetime, E.Value creator, E.Value emailtxt, E.Value creatorIdent) <- ledges
             <tr>
               <td> #{ maybe "" id usrident }
-              <td> #{ show amount }
+              <td> #{ show gamount }
+              <td> #{ show namount }
               <td> #{ show datetime}
               <td> #{ maybe "" id emailtxt }
               <td> #{ creatorIdent }

@@ -6,13 +6,15 @@ import Data.Time
 
 data NewLedgerEntry = NewLedgerEntry {
   userName :: Text, 
-  amount :: Int
+  amountGross :: Int,
+  amountNet :: Int
   }
   
 newLedgerEntryForm :: Maybe User -> Form NewLedgerEntry
 newLedgerEntryForm mbusr = renderDivs $ NewLedgerEntry
   <$> areq textField ("user name: " { fsAttrs = [("readonly", "")] }) (userIdent <$> mbusr)
-  <*> areq intField "amount" Nothing
+  <*> areq intField "gross amount" Nothing
+  <*> areq intField "net amount" Nothing
 
 getAddLedgerEntryR :: UserId -> Handler Html
 getAddLedgerEntryR uid = do
@@ -43,6 +45,8 @@ postAddLedgerEntryR uid = do
       case result of 
         FormSuccess nle -> do 
           now <- lift getCurrentTime
-          blah <- runDB $ insert $ Ledger Nothing (Just uid) Nothing (amount nle) logid now
+          blah <- runDB $ insert $ 
+            Ledger Nothing (Just uid) Nothing 
+              (amountGross nle) (amountNet nle) logid now
           redirect $ UserTransactionsR uid 
         _ -> error "fail"

@@ -9,7 +9,7 @@ getUserBalance :: UserId -> Handler Int
 getUserBalance uid = do
   (runDB $ E.select 
     $ E.from $ \lolwut -> do 
-      let sumamt = (E.sum_ (lolwut ^. LedgerAmount))
+      let sumamt = (E.sum_ (lolwut ^. LedgerAmountGross))
       E.where_ $ lolwut ^. LedgerUser E.==. (E.val $ Just uid)
       return sumamt) >>= (\x -> 
         case x of 
@@ -34,7 +34,8 @@ getUserTransactionsR uid = do
               E.on $ user ^. UserId E.==. ledger ^. LedgerCreator
               E.orderBy $ [E.asc ( ledger ^. LedgerDate)]
               return 
-                ( ledger ^. LedgerAmount,
+                ( ledger ^. LedgerAmountGross,
+                  ledger ^. LedgerAmountNet,
                   ledger ^. LedgerDate,
                   ledger ^. LedgerCreator,
                   user ^. UserIdent ) 
@@ -51,12 +52,14 @@ getUserTransactionsR uid = do
                   <td> #{show bal}
                <table class="low">
                 <tr>
-                  <th> amount
+                  <th> gross
+                  <th> net
                   <th> datetime
                   <th> created by
-                $forall (E.Value amount, E.Value datetime, E.Value creatorid, E.Value creatorIdent) <- ledges
+                $forall (E.Value gamount, E.Value namount, E.Value datetime, E.Value creatorid, E.Value creatorIdent) <- ledges
                   <tr>
-                    <td> #{amount}
+                    <td> #{gamount}
+                    <td> #{namount}
                     <td> #{show datetime}
                     <td> #{creatorIdent}
              |]

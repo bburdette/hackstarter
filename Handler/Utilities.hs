@@ -67,11 +67,13 @@ ppToTransaction mp = do
   datetime <- F.parseTime defaultTimeLocale "%-m/%-d/%Y %H:%M:%S %Z" $
     date ++ " " ++ time ++ " " ++ zone
   name <- fmap T.pack $ M.lookup "Name" mp 
-  famount <- fmap (\x -> read (filter ((/=) ',') x)) $ M.lookup "Net" mp :: Maybe Float
-  let amount = truncate $ famount * 100.0
+  fgamount <- fmap (\x -> read (filter ((/=) ',') x)) $ M.lookup "Gross" mp :: Maybe Float
+  fnamount <- fmap (\x -> read (filter ((/=) ',') x)) $ M.lookup "Net" mp :: Maybe Float
+  let gamount = truncate $ fgamount * 100.0
+      namount = truncate $ fnamount * 100.0
   email <- fmap T.pack $ M.lookup "From Email Address" mp
   transactionId <- fmap T.pack $ M.lookup "Transaction ID" mp
-  Just $ Transaction datetime name amount email transactionId
+  Just $ Transaction datetime name gamount namount email transactionId
 
 -- eppToTransaction :: (M.Map String String) -> Maybe UTCTime 
 eppToTransaction mp = ( 
@@ -98,7 +100,8 @@ eppToTransaction mp = (
 data Transaction = Transaction 
   { dateTime :: UTCTime
   , name :: Text
-  , amount :: Int
+  , amountGross :: Int
+  , amountNet :: Int
   , email :: Text
   , transactionId :: Text
   }
@@ -121,7 +124,8 @@ addTransactionWUser creator defaultdr trans = do
     Ledger (Just (transactionId trans))
            (emailUser eml)
            (Just ekey)
-           (amount trans)
+           (amountGross trans)
+           (amountNet trans)
            creator
            (dateTime trans)
 
@@ -140,7 +144,8 @@ addTransaction creator trans = do
     Ledger (Just (transactionId trans))
            (emailUser eml)
            (Just ekey)
-           (amount trans)
+           (amountGross trans)
+           (amountNet trans)
            creator
            (dateTime trans)
 

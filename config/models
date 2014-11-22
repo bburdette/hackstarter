@@ -29,7 +29,8 @@ Ledger
     transactionid Text Maybe
     user UserId Maybe
     email EmailId Maybe
-    amount Int
+    amountGross Int
+    amountNet Int
     creator UserId
     date UTCTime default=CURRENT_TIMESTAMP
     UniqueTransactionId transactionid !force
