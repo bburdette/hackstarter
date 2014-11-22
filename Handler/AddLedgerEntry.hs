@@ -5,15 +5,13 @@ import Permissions
 import Data.Time
 
 data NewLedgerEntry = NewLedgerEntry {
-  fromUserIdent :: Text, 
-  toUserIdent :: Text, 
+  userName :: Text, 
   amount :: Int
   }
   
 newLedgerEntryForm :: Maybe User -> Form NewLedgerEntry
 newLedgerEntryForm mbusr = renderDivs $ NewLedgerEntry
-  <$> areq textField ("from user: " { fsAttrs = [("readonly", "")] }) (userIdent <$> mbusr)
-  <*> areq textField "to user: " Nothing 
+  <$> areq textField ("user name: " { fsAttrs = [("readonly", "")] }) (userIdent <$> mbusr)
   <*> areq intField "amount" Nothing
 
 getAddLedgerEntryR :: UserId -> Handler Html
@@ -45,7 +43,6 @@ postAddLedgerEntryR uid = do
       case result of 
         FormSuccess nle -> do 
           now <- lift getCurrentTime
-          mbtoUserEntity <- runDB $ getBy $ UniqueUser (toUserIdent nle)
-          blah <- runDB $ insert $ Ledger Nothing (Just uid) Nothing (fmap entityKey mbtoUserEntity) Nothing (amount nle) logid now
+          blah <- runDB $ insert $ Ledger Nothing (Just uid) Nothing (amount nle) logid now
           redirect $ UserTransactionsR uid 
         _ -> error "fail"
