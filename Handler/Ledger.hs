@@ -45,7 +45,11 @@ getLedgerR = do
             <th> Creator
           $forall (E.Value usrId, E.Value usrident, E.Value gamount, E.Value namount, E.Value datetime, E.Value creator, E.Value emailtxt, E.Value creatorIdent) <- ledges
             <tr>
-              <td> #{ maybe "" id usrident }
+              <td> 
+                $maybe uid <- usrId
+                  <a href=@{UserR uid}> #{ maybe "" id usrident }
+                $nothing
+                  #{ maybe "" id usrident }
               <td> #{ show gamount }
               <td> #{ show namount }
               <td> #{ show datetime}
