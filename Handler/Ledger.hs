@@ -9,13 +9,14 @@ getLedgerR :: Handler Html
 getLedgerR = do
   logid <- requireAuthId
   requireAdmin logid
-  mahsum <- runDB $ E.select 
+  mahsums <- runDB $ E.select 
     $ E.from $ \lolwut -> do 
-      let sumamt = (E.sum_ (lolwut ^. LedgerAmountGross))
-      return sumamt
-  let summ = case mahsum of 
-                [E.Value (Just amt)] -> amt
-                _ -> 0 :: Int
+      let sumg = (E.sum_ (lolwut ^. LedgerAmountGross))
+          sumn = (E.sum_ (lolwut ^. LedgerAmountNet))
+      return (sumg, sumn)
+  let (sumg, sumn) = case mahsums of 
+                [(E.Value (Just gamt), E.Value (Just namt))] -> (gamt, namt)
+                _ -> (0,0) :: (Int,Int)
    in do
     ledges <- runDB $ E.select 
       $ E.from $ \(E.InnerJoin (E.LeftOuterJoin (E.LeftOuterJoin ledger user) email) usercreator) -> do 
@@ -35,6 +36,7 @@ getLedgerR = do
     defaultLayout $ do 
       [whamlet| 
         <h4> Ledger
+        <br> Sum of transactions: #{show sumg} #{show sumn}
         <table class="ledgarrr">
           <tr>
             <th> User 
@@ -55,7 +57,6 @@ getLedgerR = do
               <td> #{ show datetime}
               <td> #{ maybe "" id emailtxt }
               <td> #{ creatorIdent }
-          <br> Sum of transactions: #{show summ}
       |]
 
 postLedgerR :: Handler Html
