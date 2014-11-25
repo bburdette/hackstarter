@@ -33,43 +33,43 @@ data DuesEntry = DuesEntry {
 -- ok lets do it that way.
 
 -- assuming transactions are in ascending order by time.
+-- assuming all these are FOR dues
 calcDues :: [(UTCTime, Int)] -> [Int] -> [DuesEntry]
 calcDues transactions duesrates = 
-  -- assuming all these are FOR dues, and are an amount in the duesrates table.   
-  -- ledges <- runDB $ selectList [LedgerUser ==. Just uid] [Asc LedgerDate]
-  -- let transes = map (\(Entity xk x) -> (ledgerDate x, ledgerAmountGross x)) ledges
-  makaDoose (filter ((<) 0) (sort duesrates)) Nothing 0 transactions
-  -- return $ makeDues duesrates transes
+  makeDues (filter ((<) 0) (sort duesrates)) Nothing 0 transactions
 
-makaDoose :: [Int] -> (Maybe (UTCTime, Int)) -> Int -> [(UTCTime, Int)] -> [DuesEntry]
+makeDues :: [Int] -> (Maybe (UTCTime, Int)) -> Int -> [(UTCTime, Int)] -> [DuesEntry]
 -- if no more transactions, we're done making dues entries.
-makaDoose _ Nothing _ [] = []
-makaDoose drs (Just (time,amt)) bal [] = 
+makeDues _ Nothing _ [] = []
+makeDues drs (Just (time,amt)) bal [] = 
   if (bal >= amt)
     then let nexttime = addMonths time 1 in 
       (DuesEntry nexttime amt bal) : 
-        (makaDoose drs (Just (nexttime, amt)) (bal-amt) [])
+        (makeDues drs (Just (nexttime, amt)) (bal-amt) [])
     else []
 -- add transactions until the balance is >= one of the dues rates.  that's our initial
 -- dues rate, and dues transaction datetime.
-makaDoose duesrates Nothing argbalance ((time,amt):rest) = 
+makeDues duesrates Nothing argbalance ((time,amt):rest) = 
   let balance = argbalance + amt
       rates = takeWhile ((>=) balance) duesrates in 
   case rates of 
-    [] -> makaDoose duesrates Nothing (balance + amt) rest
+    [] -> makeDues duesrates Nothing (balance + amt) rest
     ratez -> let rate = last ratez in 
       (DuesEntry time rate balance) : 
-         makaDoose duesrates (Just (time, rate)) (balance - rate) rest
-makaDoose duesrates (Just (lasttime, lastrate)) balance dooselist = 
-  let nextdate = addMonths lasttime 2
-      (paid, future) = splitOn (\(time,_) -> time >= nextdate) dooselist
-      newbalance = foldl (+) balance (map (\(_,amt) -> amt) paid)
+         makeDues duesrates (Just (time, rate)) (balance - rate) rest
+makeDues duesrates (Just (lasttime, lastrate)) balance ((time,amt):rest) = 
+  let nextdate = addMonths lasttime 2 in
+  if (time > nextdate) 
+    then makeDues duesrates (Just ((addMonths lasttime 1), lastrate)) balance ((time,amt):rest)
+    else let
+      newbalance = balance + amt
+      rate = if (elem amt duesrates) then amt else lastrate
       in
-    if newbalance > lastrate
-      then let ddate = addMonths lasttime 1 
-               nbal = newbalance - lastrate in 
-        (DuesEntry ddate lastrate newbalance) : makaDoose duesrates (Just (ddate, lastrate)) nbal future 
-      else makaDoose duesrates (Just ((addMonths lasttime 1), lastrate)) newbalance future
+      if newbalance >= rate
+        then let ddate = addMonths lasttime 1 
+                 nbal = newbalance - rate in 
+          (DuesEntry ddate rate newbalance) : makeDues duesrates (Just (ddate, rate)) nbal rest 
+        else makeDues duesrates (Just (lasttime, rate)) newbalance rest 
 
 addMonths :: UTCTime -> Integer -> UTCTime
 addMonths start months =
@@ -142,8 +142,7 @@ getUserTransactionsR uid = do
                     <td> #{namount}
                     <td> #{show datetime}
                     <td> #{creatorIdent}
-              <br> #{show transes}
-              <br> #{show drs}
+              <h3> Estimated dues payments
               <table class="dues">
                 <tr>
                   <th> datetime
@@ -155,5 +154,7 @@ getUserTransactionsR uid = do
                     <td> #{show bal}
             |]
  
+--              <br> #{show transes}
+--              <br> #{show drs}
 postUserTransactionsR :: UserId -> Handler Html
 postUserTransactionsR = error "Not yet implemented: postUserTransactionsR"
