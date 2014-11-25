@@ -21,8 +21,10 @@ getUserBalance uid = do
 
 data DuesEntry = DuesEntry {
   date :: UTCTime,
-  amount :: Int
+  amount :: Int,
+  balance :: Int
   }
+  deriving Show
 
 -- if we allowed paying any amount for dues, carrying over a balance and so forth, how would we determine the
 -- dues rates without programming them in manually?
@@ -30,46 +32,44 @@ data DuesEntry = DuesEntry {
 -- if there is a dues amount, that's the rate until there is another valid dues amount.
 -- ok lets do it that way.
 
-
-calcDues :: UserId -> [Int] -> Handler [DuesEntry]
-calcDues uid duesrates = do 
+-- assuming transactions are in ascending order by time.
+calcDues :: [(UTCTime, Int)] -> [Int] -> [DuesEntry]
+calcDues transactions duesrates = 
   -- assuming all these are FOR dues, and are an amount in the duesrates table.   
-  ledges <- runDB $ selectList [LedgerUser ==. Just uid] [Asc LedgerDate]
-  -- let transes = filter (\(dt,amt) -> elem amt duesrates) 
-  --                     (map (\(Entity xk x) -> (ledgerDate x, ledgerAmountGross x)) ledges)
-  let transes = map (\(Entity xk x) -> (ledgerDate x, ledgerAmountGross x)) ledges
-  return $ makaDoose (filter ((<) 0) (sort duesrates)) Nothing 0 transes
+  -- ledges <- runDB $ selectList [LedgerUser ==. Just uid] [Asc LedgerDate]
+  -- let transes = map (\(Entity xk x) -> (ledgerDate x, ledgerAmountGross x)) ledges
+  makaDoose (filter ((<) 0) (sort duesrates)) Nothing 0 transactions
   -- return $ makeDues duesrates transes
-
-
-{-
-makeDues :: Int -> [Int] -> [(UTCTime, Int)] -> [DuesEntry]
-makeDues rate duesrates ((time, amt):xs) = makaDoose rate duesrates time amt xs 
-makeDues _ _ [] = []
--}
 
 makaDoose :: [Int] -> (Maybe (UTCTime, Int)) -> Int -> [(UTCTime, Int)] -> [DuesEntry]
 -- if no more transactions, we're done making dues entries.
-makaDoose _ _ _ [] = []
+makaDoose _ Nothing _ [] = []
+makaDoose drs (Just (time,amt)) bal [] = 
+  if (bal >= amt)
+    then let nexttime = addMonths time 1 in 
+      (DuesEntry nexttime amt bal) : 
+        (makaDoose drs (Just (nexttime, amt)) (bal-amt) [])
+    else []
 -- add transactions until the balance is >= one of the dues rates.  that's our initial
 -- dues rate, and dues transaction datetime.
-makaDoose duesrates Nothing balance ((time,amt):rest) = 
-  let rates = takeWhile ((>=) balance) duesrates in 
+makaDoose duesrates Nothing argbalance ((time,amt):rest) = 
+  let balance = argbalance + amt
+      rates = takeWhile ((>=) balance) duesrates in 
   case rates of 
     [] -> makaDoose duesrates Nothing (balance + amt) rest
     ratez -> let rate = last ratez in 
-      (DuesEntry time rate) : makaDoose duesrates (Just (time, rate)) (balance - rate) rest
-
+      (DuesEntry time rate balance) : 
+         makaDoose duesrates (Just (time, rate)) (balance - rate) rest
 makaDoose duesrates (Just (lasttime, lastrate)) balance dooselist = 
   let nextdate = addMonths lasttime 2
-      (paid, future) = splitOn (\(time,_) -> time <= nextdate) dooselist
+      (paid, future) = splitOn (\(time,_) -> time >= nextdate) dooselist
       newbalance = foldl (+) balance (map (\(_,amt) -> amt) paid)
       in
     if newbalance > lastrate
       then let ddate = addMonths lasttime 1 
                nbal = newbalance - lastrate in 
-        (DuesEntry ddate nbal) : makaDoose duesrates (Just (ddate, nbal)) nbal future 
-      else makaDoose duesrates (Just (lasttime, lastrate)) newbalance future
+        (DuesEntry ddate lastrate newbalance) : makaDoose duesrates (Just (ddate, lastrate)) nbal future 
+      else makaDoose duesrates (Just ((addMonths lasttime 1), lastrate)) newbalance future
 
 addMonths :: UTCTime -> Integer -> UTCTime
 addMonths start months =
@@ -80,12 +80,13 @@ splitOn cond lst =
   spuliton cond [] lst 
 
 spuliton :: (a -> Bool) -> [a] -> [a] -> ([a],[a])
-spuliton _ [] frnt = (reverse frnt, [])
-spuliton cond (s:ss) frnt = 
+spuliton _ [] [] = ([], [])
+spuliton _ frnt [] = (reverse frnt, [])
+spuliton cond frnt (s:ss)  = 
   if (cond s) then
     (reverse frnt, (s:ss))
   else
-    spuliton cond ss (s:frnt)
+    spuliton cond (s:frnt) ss
 
 
 getUserTransactionsR :: UserId -> Handler Html
@@ -111,6 +112,13 @@ getUserTransactionsR uid = do
                   ledger ^. LedgerDate,
                   ledger ^. LedgerCreator,
                   user ^. UserIdent ) 
+          plainledges <- runDB $ selectList [LedgerUser ==. Just uid] [Asc LedgerDate]
+          duesrates <- runDB $ selectList [] [Asc DuesRateAmount]
+          let transes = map (\(Entity xk x) -> (ledgerDate x, ledgerAmountGross x)) 
+                            plainledges
+              drs = map (\(Entity k v) -> duesRateAmount v) duesrates
+              dues = calcDues transes drs
+          -- let dues = take 10 (calcDues transes drs)
           defaultLayout $ do
             [whamlet| 
               <h3> transactions for user: 
@@ -122,7 +130,7 @@ getUserTransactionsR uid = do
                   <th> balance
                 <tr>
                   <td> #{show bal}
-               <table class="low">
+              <table class="low">
                 <tr>
                   <th> gross
                   <th> net
@@ -134,7 +142,18 @@ getUserTransactionsR uid = do
                     <td> #{namount}
                     <td> #{show datetime}
                     <td> #{creatorIdent}
-             |]
-
+              <br> #{show transes}
+              <br> #{show drs}
+              <table class="dues">
+                <tr>
+                  <th> datetime
+                  <th> amount  
+                $forall (DuesEntry date amount bal) <- dues 
+                  <tr>
+                    <td> #{show date}
+                    <td> #{show amount}
+                    <td> #{show bal}
+            |]
+ 
 postUserTransactionsR :: UserId -> Handler Html
 postUserTransactionsR = error "Not yet implemented: postUserTransactionsR"
