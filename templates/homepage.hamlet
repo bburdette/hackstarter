@@ -17,4 +17,6 @@
       <a href=@{UtilitiesR}> utilities 
     <li> Look at the 
       <a href=@{LedgerR}> ledger 
+    <li> Look at the 
+      <a href=@{TransactionTypesR}> transaction types
 

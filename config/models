@@ -33,7 +33,11 @@ Ledger
     amountNet Int
     creator UserId
     date UTCTime default=CURRENT_TIMESTAMP
+    type TransactionTypeId Maybe
     UniqueTransactionId transactionid !force
+TransactionType
+    name Text
+    UniqueType name
 Permission
     name Text
     description Text Maybe

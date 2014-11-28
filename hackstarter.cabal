@@ -44,6 +44,9 @@ library
                      Handler.Utilities
                      Handler.Emails
                      Handler.AddEmail
+                     Handler.TransactionTypes
+                     Handler.TransactionType
+                     Handler.AddTransactionType
                      Permissions
 
     if flag(dev) || flag(library-only)

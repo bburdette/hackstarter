@@ -128,6 +128,7 @@ addTransactionWUser creator defaultdr trans = do
            (amountNet trans)
            creator
            (dateTime trans)
+           Nothing
 
 
 -- version where we don't create user accounts.
@@ -148,6 +149,7 @@ addTransaction creator trans = do
            (amountNet trans)
            creator
            (dateTime trans)
+           Nothing
 
 unMaybe :: Maybe a -> Handler a
 unMaybe mba = 
