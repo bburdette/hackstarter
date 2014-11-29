@@ -32,6 +32,7 @@ Ledger
     amountGross Int
     amountNet Int
     creator UserId
+    manual Bool
     date UTCTime default=CURRENT_TIMESTAMP
     type TransactionTypeId Maybe
     UniqueTransactionId transactionid !force

@@ -47,6 +47,6 @@ postAddLedgerEntryR uid = do
           now <- lift getCurrentTime
           blah <- runDB $ insert $ 
             Ledger Nothing (Just uid) Nothing 
-              (amountGross nle) (amountNet nle) logid now Nothing
+              (amountGross nle) (amountNet nle) logid True now Nothing
           redirect $ UserTransactionsR uid 
         _ -> error "fail"

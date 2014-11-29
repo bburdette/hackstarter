@@ -127,6 +127,7 @@ addTransactionWUser creator defaultdr trans = do
            (amountGross trans)
            (amountNet trans)
            creator
+           False
            (dateTime trans)
            Nothing
 
@@ -148,6 +149,7 @@ addTransaction creator trans = do
            (amountGross trans)
            (amountNet trans)
            creator
+           False
            (dateTime trans)
            Nothing
 
