@@ -124,7 +124,8 @@ getUserTransactionsR uid = do
               <h3> transactions for user: 
                 <a href=@{UserR uid}>#{userIdent usr} 
               <br>
-                <a href=@{AddLedgerEntryR uid}> add transaction 
+                $if (admin)
+                  <a href=@{AddLedgerEntryR uid}> add transaction 
               <table class="sum">
                 <tr>
                   <th> balance
