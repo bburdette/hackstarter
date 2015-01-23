@@ -148,6 +148,7 @@ getUserTransactionsR uid = do
                 <tr>
                   <th> datetime
                   <th> amount  
+                  <th> balance 
                 $forall (DuesEntry date amount bal) <- dues 
                   <tr>
                     <td> #{show date}
