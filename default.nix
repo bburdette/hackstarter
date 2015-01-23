@@ -23,7 +23,7 @@ cabal.mkDerivation (self: {
     transformers yesod yesodCore yesodTest
   ];
   meta = {
-    license = self.stdenv.lib.licenses.unfree;
+    #license = self.stdenv.lib.licenses.unfree;
     platforms = self.ghc.meta.platforms;
   };
 })

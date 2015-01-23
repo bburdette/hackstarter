@@ -13,7 +13,7 @@ getUserBalance uid = do
   (runDB $ E.select 
     $ E.from $ \lolwut -> do 
       let sumamt = (E.sum_ (lolwut ^. LedgerAmountGross))
-      E.where_ $ lolwut ^. LedgerUser E.==. (E.val $ Just uid)
+      E.where_ $ lolwut ^. LedgerFromuser E.==. (E.val $ Just uid)
       return sumamt) >>= (\x -> 
         case x of 
           [E.Value (Just amt)] -> return amt
@@ -103,7 +103,7 @@ getUserTransactionsR uid = do
         Just usr -> do 
           ledges <- runDB $ E.select 
             $ E.from $ \(E.InnerJoin user ledger) -> do 
-              E.where_ $ ledger ^. LedgerUser E.==. (E.val $ Just uid)
+              E.where_ $ ledger ^. LedgerFromuser E.==. (E.val $ Just uid)
               E.on $ user ^. UserId E.==. ledger ^. LedgerCreator
               E.orderBy $ [E.asc ( ledger ^. LedgerDate)]
               return 
@@ -112,7 +112,7 @@ getUserTransactionsR uid = do
                   ledger ^. LedgerDate,
                   ledger ^. LedgerCreator,
                   user ^. UserIdent ) 
-          plainledges <- runDB $ selectList [LedgerUser ==. Just uid] [Asc LedgerDate]
+          plainledges <- runDB $ selectList [LedgerFromuser ==. Just uid] [Asc LedgerDate]
           duesrates <- runDB $ selectList [] [Asc DuesRateAmount]
           let transes = map (\(Entity xk x) -> (ledgerDate x, ledgerAmountGross x)) 
                             plainledges
