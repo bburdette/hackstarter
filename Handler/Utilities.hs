@@ -136,7 +136,7 @@ addPaypalTransaction creator trans = do
       return (Entity key eml) 
     Just eml -> return eml
   runDB $ insertUnique $ 
-    Paypal (Just (transactionId trans))
+    Paypal (transactionId trans)
            (ppType trans)
            (title trans)
            (Just ekey)
