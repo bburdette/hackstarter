@@ -115,7 +115,7 @@ data PaypalTransaction = PaypalTransaction
   deriving Show
 
 -- add paypal transaction, creating emails if necessary.
-addPaypalTransaction :: UserId -> PaypalTransaction -> Handler (Maybe (Key Ledger))
+addPaypalTransaction :: UserId -> PaypalTransaction -> Handler (Maybe (Key Paypal))
 addPaypalTransaction creator trans = do 
   mbFromEmail <- runDB $ getBy $ UniqueEmail (fromEmail trans)
   mbToEmail <- runDB $ getBy $ UniqueEmail (toEmail trans)
@@ -136,7 +136,7 @@ addPaypalTransaction creator trans = do
       return (Entity key eml) 
     Just eml -> return eml
   runDB $ insertUnique $ 
-    Ledger (Just (transactionId trans))
+    Paypal (Just (transactionId trans))
            (ppType trans)
            (title trans)
            (Just ekey)
@@ -149,7 +149,7 @@ addPaypalTransaction creator trans = do
 -- version where we create user accounts if they don't exist.
 -- uh oh, user idents are sposed to be unique!!
 {-
-addTransactionWUser :: UserId -> DuesRateId -> PaypalTransaction -> Handler (Maybe (Key Ledger))
+addTransactionWUser :: UserId -> DuesRateId -> PaypalTransaction -> Handler (Maybe (Key Paypal))
 addTransactionWUser creator defaultdr trans = do 
 {-
   mbemail <- runDB $ getBy $ UniqueEmail (email trans)
@@ -192,7 +192,7 @@ addTransactionWUser creator defaultdr trans = do
       return (Entity key eml) 
     Just eml -> return eml
   runDB $ insertUnique $ 
-    Ledger (Just (transactionId trans))
+    Paypal (Just (transactionId trans))
            (emailUser eml)
            (Just ekey)
            (emailUser teml)
@@ -207,7 +207,7 @@ addTransactionWUser creator defaultdr trans = do
 
 {-
 -- version where we don't create user accounts.
-addTransaction :: UserId -> Transaction -> Handler (Maybe (Key Ledger))
+addTransaction :: UserId -> Transaction -> Handler (Maybe (Key Paypal))
 addTransaction creator trans = do 
   mbemail <- runDB $ getBy $ UniqueEmail (email trans)
   Entity ekey eml <- case mbemail of 
@@ -217,7 +217,7 @@ addTransaction creator trans = do
               return (Entity key eml) 
             Just eml -> return eml
   runDB $ insertUnique $ 
-    Ledger (Just (transactionId trans))
+    Paypal (Just (transactionId trans))
            (emailUser eml)
            (Just ekey)
            (amountGross trans)

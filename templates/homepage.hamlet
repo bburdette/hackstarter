@@ -16,7 +16,7 @@
     <li> Look at the 
       <a href=@{UtilitiesR}> utilities 
     <li> Look at the 
-      <a href=@{LedgerR}> ledger 
+      <a href=@{PaypalR}> paypal transactions
     <li> Look at the 
       <a href=@{TransactionTypesR}> transaction types
 

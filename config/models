@@ -25,7 +25,7 @@ DuesRate
     name Text
     amount Int
     UniqueDuesRate name
-Ledger
+Paypal
     transactionid Text Maybe
     description Text
     memo Text
@@ -43,10 +43,10 @@ Ledger
 Internal
     -- internal transaction comes from an account OR an external transaction.
     fromaccount AccountId Maybe
-    fromtransaction LedgerId Maybe
+    fromtransaction PaypalId Maybe
     -- internal transaction goes to an account OR an external transaction.
     toaccount AccountId Maybe
-    totransaction LedgerId Maybe
+    totransaction PaypalId Maybe
     -- besides destination and origin, we have:
     creator UserId
     date UTCTime default=CURRENT_TIMESTAMP

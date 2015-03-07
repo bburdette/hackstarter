@@ -47,6 +47,7 @@ library
                      Handler.TransactionTypes
                      Handler.TransactionType
                      Handler.AddTransactionType
+                     Handler.Paypal
                      Permissions
 
     if flag(dev) || flag(library-only)

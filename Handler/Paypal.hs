@@ -1,4 +1,4 @@
-module Handler.Ledger where
+module Handler.Paypal where
 
 import Import
 import Permissions
@@ -6,38 +6,36 @@ import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 import Data.Fixed
 
-getLedgerR :: Handler Html
-getLedgerR = error "blah"
-{-
-getLedgerR = do
+getPaypalR :: Handler Html
+getPaypalR = do
   logid <- requireAuthId
   requireAdmin logid
   mahsums <- runDB $ E.select 
     $ E.from $ \lolwut -> do 
-      let sumg = (E.sum_ (lolwut ^. LedgerAmountGross))
-          sumn = (E.sum_ (lolwut ^. LedgerAmountNet))
+      let sumg = (E.sum_ (lolwut ^. PaypalAmountGross))
+          sumn = (E.sum_ (lolwut ^. PaypalAmountNet))
       return (sumg, sumn)
   let (sumg, sumn) = case mahsums of 
                 [(E.Value (Just gamt), E.Value (Just namt))] -> (gamt, namt)
                 _ -> (0,0) :: (Centi, Centi)
    in do
     ledges <- runDB $ E.select 
-      $ E.from $ \(E.InnerJoin (E.LeftOuterJoin ledger email) usercreator) -> do 
-        E.on $ usercreator ^. UserId E.==. ledger ^. LedgerCreator
-        E.on $ (ledger ^. LedgerFromemail E.==. email E.?. EmailId) 
-        E.orderBy $ [E.asc ( ledger ^. LedgerDate)]
+      $ E.from $ \(E.InnerJoin (E.LeftOuterJoin paypal email) usercreator) -> do 
+        E.on $ usercreator ^. UserId E.==. paypal ^. PaypalCreator
+        E.on $ (paypal ^. PaypalFromemail E.==. email E.?. EmailId) 
+        E.orderBy $ [E.asc ( paypal ^. PaypalDate)]
         return 
-          ( ledger ^. LedgerDate,
-            ledger ^. LedgerAmountGross,
-            ledger ^. LedgerAmountNet,
-            ledger ^. LedgerCreator,
-            ledger ^. LedgerDescription,
-            ledger ^. LedgerMemo,
+          ( paypal ^. PaypalDate,
+            paypal ^. PaypalAmountGross,
+            paypal ^. PaypalAmountNet,
+            paypal ^. PaypalCreator,
+            paypal ^. PaypalDescription,
+            paypal ^. PaypalMemo,
             email E.?. EmailEmail,
             usercreator ^. UserIdent ) 
     defaultLayout $ do 
       [whamlet| 
-        <h4> Ledger
+        <h4> Paypal
         <br> Sum of transactions: #{show sumg} #{show sumn}
         <table class="ledgarrr">
           <tr>
@@ -58,7 +56,6 @@ getLedgerR = do
               <td> #{ maybe "" id emailtxt }
               <td> #{ creatorIdent }
       |]
--}
 
-postLedgerR :: Handler Html
-postLedgerR = error "Not yet implemented: postLedgerR"
+postPaypalR :: Handler Html
+postPaypalR = error "Not yet implemented: postPaypalR"
