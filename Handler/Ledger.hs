@@ -6,8 +6,6 @@ import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 
 getLedgerR :: Handler Html
-getLedgerR = error "nope"
-{-
 getLedgerR = do
   logid <- requireAuthId
   requireAdmin logid
@@ -21,18 +19,17 @@ getLedgerR = do
                 _ -> (0,0) :: (Int,Int)
    in do
     ledges <- runDB $ E.select 
-      $ E.from $ \(E.InnerJoin (E.LeftOuterJoin (E.LeftOuterJoin ledger user) email) usercreator) -> do 
+      $ E.from $ \(E.InnerJoin (E.LeftOuterJoin ledger email) usercreator) -> do 
         E.on $ usercreator ^. UserId E.==. ledger ^. LedgerCreator
         E.on $ (ledger ^. LedgerFromemail E.==. email E.?. EmailId) 
-        E.on $ (ledger ^. LedgerFromuser E.==. user E.?. UserId) 
         E.orderBy $ [E.asc ( ledger ^. LedgerDate)]
         return 
-          ( user E.?. UserId,
-            user E.?. UserIdent,
+          ( ledger ^. LedgerDate,
             ledger ^. LedgerAmountGross,
             ledger ^. LedgerAmountNet,
-            ledger ^. LedgerDate,
             ledger ^. LedgerCreator,
+            ledger ^. LedgerDescription,
+            ledger ^. LedgerMemo,
             email E.?. EmailEmail,
             usercreator ^. UserIdent ) 
     defaultLayout $ do 
@@ -41,26 +38,23 @@ getLedgerR = do
         <br> Sum of transactions: #{show sumg} #{show sumn}
         <table class="ledgarrr">
           <tr>
-            <th> User 
+            <th> Datetime
             <th> Gross
             <th> Net
-            <th> Datetime
+            <th> Description
+            <th> Memo
             <th> Email 
             <th> Creator
-          $forall (E.Value usrId, E.Value usrident, E.Value gamount, E.Value namount, E.Value datetime, E.Value creator, E.Value emailtxt, E.Value creatorIdent) <- ledges
+          $forall (E.Value datetime, E.Value gamount, E.Value namount, E.Value creator, E.Value description, E.Value memo, E.Value emailtxt, E.Value creatorIdent) <- ledges
             <tr>
-              <td> 
-                $maybe uid <- usrId
-                  <a href=@{UserR uid}> #{ maybe "" id usrident }
-                $nothing
-                  #{ maybe "" id usrident }
+              <td> #{ show datetime}
               <td> #{ show gamount }
               <td> #{ show namount }
-              <td> #{ show datetime}
+              <td> #{ description }
+              <td> #{ memo }
               <td> #{ maybe "" id emailtxt }
               <td> #{ creatorIdent }
       |]
--}
 
 postLedgerR :: Handler Html
 postLedgerR = error "Not yet implemented: postLedgerR"
