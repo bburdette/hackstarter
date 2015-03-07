@@ -6,6 +6,8 @@ import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 
 getLedgerR :: Handler Html
+getLedgerR = error "nope"
+{-
 getLedgerR = do
   logid <- requireAuthId
   requireAdmin logid
@@ -58,6 +60,7 @@ getLedgerR = do
               <td> #{ maybe "" id emailtxt }
               <td> #{ creatorIdent }
       |]
+-}
 
 postLedgerR :: Handler Html
 postLedgerR = error "Not yet implemented: postLedgerR"

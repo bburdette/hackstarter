@@ -8,6 +8,7 @@ import Data.Time.Calendar
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 
+{-
 getUserBalance :: UserId -> Handler Int
 getUserBalance uid = do
   (runDB $ E.select 
@@ -18,6 +19,7 @@ getUserBalance uid = do
         case x of 
           [E.Value (Just amt)] -> return amt
           _ -> return 0) 
+-}
 
 data DuesEntry = DuesEntry {
   date :: UTCTime,
@@ -90,6 +92,8 @@ spuliton cond frnt (s:ss)  =
 
 
 getUserTransactionsR :: UserId -> Handler Html
+getUserTransactionsR uid = error "unimplelmented" 
+{-
 getUserTransactionsR uid = do
   logid <- requireAuthId
   admin <- isAdmin logid
@@ -155,8 +159,7 @@ getUserTransactionsR uid = do
                     <td> #{show amount}
                     <td> #{show bal}
             |]
+-}
  
---              <br> #{show transes}
---              <br> #{show drs}
 postUserTransactionsR :: UserId -> Handler Html
 postUserTransactionsR = error "Not yet implemented: postUserTransactionsR"

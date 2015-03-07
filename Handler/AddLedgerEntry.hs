@@ -7,16 +7,14 @@ import Data.Time
 data NewLedgerEntry = NewLedgerEntry {
   fromUserIdent :: Text, 
   toUserIdent :: Text, 
-  amountGross :: Int,
-  amountNet :: Int
+  amount :: Int
   }
   
 newLedgerEntryForm :: Maybe User -> Form NewLedgerEntry
 newLedgerEntryForm mbusr = renderDivs $ NewLedgerEntry
   <$> areq textField ("from name: " { fsAttrs = [("readonly", "")] }) (userIdent <$> mbusr)
   <*> areq textField "to user:" Nothing
-  <*> areq intField "gross amount" Nothing
-  <*> areq intField "net amount" Nothing
+  <*> areq intField "amount" Nothing
 
 getAddLedgerEntryR :: UserId -> Handler Html
 getAddLedgerEntryR uid = do
@@ -37,7 +35,10 @@ getAddLedgerEntryR uid = do
             |]
       
 postAddLedgerEntryR :: UserId -> Handler Html
-postAddLedgerEntryR uid = do
+postAddLedgerEntryR uid = 
+  error "fail"
+
+{-
   logid <- requireAuthId
   admin <- isAdmin logid
   case admin of
@@ -48,9 +49,13 @@ postAddLedgerEntryR uid = do
         FormSuccess nle -> do 
           now <- lift getCurrentTime
           mbtoUserEntity <- runDB $ getBy $ UniqueUser (toUserIdent nle)
-          blah <- runDB $ insert $ Ledger Nothing (Just uid) Nothing (fmap entityKey mbtoUserEntity) Nothing (amountGross nle) (amountNet nle) logid True now Nothing
+          case mbtoUserEntity of 
+            Just (Entity toKey toUser) -> 
+              blah <- runDB $ insert $ Internal edger Nothing (Just uid) Nothing (fmap entityKey mbtoUserEntity) Nothing (amountGross nle) (amountNet nle) logid True now Nothing
           redirect $ UserTransactionsR uid 
         _ -> error "fail"
+
+-}
 
 {-
           blah <- runDB $ insert $ 

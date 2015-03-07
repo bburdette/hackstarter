@@ -59,7 +59,7 @@ parsePaypal fp = do
           return $ fmap (zipmap heads) (L.tail csvl)
     Left err -> return []
 
-ppToTransaction :: (M.Map String String) -> Maybe Transaction
+ppToTransaction :: (M.Map String String) -> Maybe PaypalTransaction
 ppToTransaction mp = do
   date <- M.lookup "Date" mp 
   time <- M.lookup "Time" mp
@@ -67,6 +67,8 @@ ppToTransaction mp = do
   datetime <- F.parseTime defaultTimeLocale "%-m/%-d/%Y %H:%M:%S %Z" $
     date ++ " " ++ time ++ " " ++ zone
   name <- fmap T.pack $ M.lookup "Name" mp 
+  ppType <- fmap T.pack $ M.lookup "Type" mp 
+  title <- fmap T.pack $ M.lookup "Item Title" mp 
   fgamount <- fmap (\x -> read (filter ((/=) ',') x)) $ M.lookup "Gross" mp :: Maybe Float
   fnamount <- fmap (\x -> read (filter ((/=) ',') x)) $ M.lookup "Net" mp :: Maybe Float
   let gamount = truncate $ fgamount * 100.0
@@ -74,7 +76,7 @@ ppToTransaction mp = do
   fromEmail <- fmap T.pack $ M.lookup "From Email Address" mp
   toEmail <- fmap T.pack $ M.lookup "To Email Address" mp
   transactionId <- fmap T.pack $ M.lookup "Transaction ID" mp
-  Just $ Transaction datetime name gamount namount fromEmail toEmail transactionId
+  Just $ PaypalTransaction datetime name ppType title gamount namount fromEmail toEmail transactionId
 
 -- eppToTransaction :: (M.Map String String) -> Maybe UTCTime 
 eppToTransaction mp = ( 
@@ -98,9 +100,11 @@ eppToTransaction mp = (
   Just $ Transaction datetime name amount email transactionId
 -}
 
-data Transaction = Transaction 
+data PaypalTransaction = PaypalTransaction 
   { dateTime :: UTCTime
   , name :: Text
+  , ppType :: Text
+  , title :: Text
   , amountGross :: Int
   , amountNet :: Int
   , fromEmail :: Text
@@ -109,9 +113,42 @@ data Transaction = Transaction
   }
   deriving Show
 
+-- add paypal transaction, creating emails if necessary.
+addPaypalTransaction :: UserId -> PaypalTransaction -> Handler (Maybe (Key Ledger))
+addPaypalTransaction creator trans = do 
+  mbFromEmail <- runDB $ getBy $ UniqueEmail (fromEmail trans)
+  mbToEmail <- runDB $ getBy $ UniqueEmail (toEmail trans)
+  Entity ekey eml <- case mbFromEmail of 
+    Nothing -> do
+      now <- lift getCurrentTime
+      let eml = Email (fromEmail trans) Nothing Nothing
+      key <- runDB $ insert eml
+      return (Entity key eml) 
+    Just eml -> return eml
+      -- if there's not a user record for the email, create one now.
+  Entity tekey teml <- case mbToEmail of 
+    -- add email records for 'to' emails, but not user accounts.
+    Nothing -> do
+      now <- lift getCurrentTime
+      let eml = Email (toEmail trans) Nothing Nothing
+      key <- runDB $ insert eml
+      return (Entity key eml) 
+    Just eml -> return eml
+  runDB $ insertUnique $ 
+    Ledger (Just (transactionId trans))
+           (ppType trans)
+           (title trans)
+           (Just ekey)
+           (Just tekey)
+           (amountGross trans)
+           (amountNet trans)
+           creator
+           (dateTime trans)
+
 -- version where we create user accounts if they don't exist.
 -- uh oh, user idents are sposed to be unique!!
-addTransactionWUser :: UserId -> DuesRateId -> Transaction -> Handler (Maybe (Key Ledger))
+{-
+addTransactionWUser :: UserId -> DuesRateId -> PaypalTransaction -> Handler (Maybe (Key Ledger))
 addTransactionWUser creator defaultdr trans = do 
 {-
   mbemail <- runDB $ getBy $ UniqueEmail (email trans)
@@ -165,7 +202,7 @@ addTransactionWUser creator defaultdr trans = do
            False
            (dateTime trans)
            Nothing
-
+-}
 
 {-
 -- version where we don't create user accounts.
@@ -216,7 +253,7 @@ postUtilitiesR = do
           lift $ fileMove fi fname
           recs <- lift $ parsePaypal fname
           let transes = (MB.catMaybes (map ppToTransaction recs))
-          keys <- mapM (addTransactionWUser logid drid) transes 
+          keys <- mapM (addPaypalTransaction logid) transes 
           let lrecs = length recs
               ltranses = length transes
               lkeys = length (MB.catMaybes keys)
