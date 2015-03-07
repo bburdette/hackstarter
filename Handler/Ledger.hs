@@ -4,6 +4,7 @@ import Import
 import Permissions
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
+import Data.Fixed
 
 getLedgerR :: Handler Html
 getLedgerR = do
@@ -16,7 +17,7 @@ getLedgerR = do
       return (sumg, sumn)
   let (sumg, sumn) = case mahsums of 
                 [(E.Value (Just gamt), E.Value (Just namt))] -> (gamt, namt)
-                _ -> (0,0) :: (Int,Int)
+                _ -> (0,0) :: (Centi, Centi)
    in do
     ledges <- runDB $ E.select 
       $ E.from $ \(E.InnerJoin (E.LeftOuterJoin ledger email) usercreator) -> do 
