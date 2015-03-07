@@ -33,8 +33,8 @@ Ledger
     fromemail EmailId Maybe
     -- touser UserId Maybe
     toemail EmailId Maybe
-    amountGross Int
-    amountNet Int
+    amountGross Centi
+    amountNet Centi
     creator UserId
     -- manual Bool
     date UTCTime default=CURRENT_TIMESTAMP

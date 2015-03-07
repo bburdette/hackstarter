@@ -11,6 +11,7 @@ import Text.CSV
 import qualified Data.Map as M
 import qualified Data.List as L
 import Data.Char
+import Data.Fixed
 import System.Locale
 import Permissions
 import qualified Data.Maybe as MB
@@ -71,8 +72,8 @@ ppToTransaction mp = do
   title <- fmap T.pack $ M.lookup "Item Title" mp 
   fgamount <- fmap (\x -> read (filter ((/=) ',') x)) $ M.lookup "Gross" mp :: Maybe Float
   fnamount <- fmap (\x -> read (filter ((/=) ',') x)) $ M.lookup "Net" mp :: Maybe Float
-  let gamount = truncate $ fgamount * 100.0
-      namount = truncate $ fnamount * 100.0
+  let gamount = MkFixed (truncate $ fgamount * 100.0)
+      namount = MkFixed (truncate $ fnamount * 100.0)
   fromEmail <- fmap T.pack $ M.lookup "From Email Address" mp
   toEmail <- fmap T.pack $ M.lookup "To Email Address" mp
   transactionId <- fmap T.pack $ M.lookup "Transaction ID" mp
@@ -105,8 +106,8 @@ data PaypalTransaction = PaypalTransaction
   , name :: Text
   , ppType :: Text
   , title :: Text
-  , amountGross :: Int
-  , amountNet :: Int
+  , amountGross :: Centi
+  , amountNet :: Centi
   , fromEmail :: Text
   , toEmail :: Text
   , transactionId :: Text
