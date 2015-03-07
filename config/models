@@ -38,7 +38,7 @@ Paypal
     -- type TransactionTypeId Maybe
     UniquePaypalTransactionId transactionid !force
 Bank
-    transactionid Text Maybe
+    transactionid Text
     date Day
     description Text
     memo Text

@@ -12,14 +12,15 @@ import qualified Data.Map as M
 import qualified Data.List as L
 import Data.Char
 import Data.Fixed
+import Data.Time.Calendar
 import System.Locale
 import Permissions
 import qualified Data.Maybe as MB
 
 paypalDir = "paypals"
 
-sampleForm :: Form FileInfo
-sampleForm = renderDivs $ 
+paypalForm :: Form FileInfo
+paypalForm = renderDivs $ 
     fileAFormReq "Upload (UTF-8) paypal transaction file:"
 
 {-
@@ -33,7 +34,7 @@ getUtilitiesR :: Handler Html
 getUtilitiesR = do
   logid <- requireAuthId
   requireAdmin logid 
-  (formWidget, formEnctype) <- generateFormPost sampleForm
+  (formWidget, formEnctype) <- generateFormPost paypalForm
   let submission = Nothing :: Maybe (FileInfo, Text)
   defaultLayout $ do
       aDomId <- newIdent
@@ -146,6 +147,27 @@ addPaypalTransaction creator trans = do
            creator
            (dateTime trans)
 
+data BankTransaction = BankTransaction 
+  { bTransactionId :: Text
+  , bDate :: Day 
+  , bDescription :: Text
+  , bMemo :: Text
+  , bAmount :: Centi
+  , bCheckNumber :: Maybe Int 
+  }
+  deriving Show
+
+-- add bank transaction, creating emails if necessary.
+addBankTransaction :: UserId -> BankTransaction -> Handler (Maybe (Key Bank))
+addBankTransaction creator trans = do 
+ runDB $ insertUnique $ 
+    Bank (bTransactionId trans)
+         (bDate trans)
+         (bDescription trans)
+         (bMemo trans)
+         (bAmount trans)
+         (bCheckNumber trans)
+
 -- version where we create user accounts if they don't exist.
 -- uh oh, user idents are sposed to be unique!!
 {-
@@ -241,7 +263,7 @@ postUtilitiesR = do
   requireAdmin logid
   mbdrid <- checkDuesRate "default" 0
   drid <- unMaybe mbdrid
-  ((result, formWidget), formEnctype) <- runFormPost sampleForm
+  ((result, formWidget), formEnctype) <- runFormPost paypalForm
   let handlerName = "postUtilitiesR" :: Text
     in do
       case result of
