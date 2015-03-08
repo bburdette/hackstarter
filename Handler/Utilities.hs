@@ -166,18 +166,19 @@ data BankTransaction = BankTransaction
 
 parseBank :: FilePath -> IO [(M.Map String String)]
 parseBank fp = do
-  fstr <- fmap T.pack $ readFile fp 
-  let (_,parze) = T.breakOn (T.pack "Transaction Number") fstr
-      meh = parseCSV fp $ T.unpack parze
+  fstr <- readFile fp 
+  let parze = breakOn "Transaction Number" fstr
+      meh = fmap (parseCSV fp) parze
   case meh of 
-    Right csvl -> 
+    Just (Right csvl) -> 
       case 2 > (length csvl) of
         True -> return []
         False -> do 
           let heads = fmap (dropWhile isSpace) $ L.head csvl
               zipmap heads datas = M.fromList $ zip heads datas
           return $ fmap (zipmap heads) (L.tail csvl)
-    Left err -> return []
+    Just (Left err) -> return []
+    Nothing -> return []
 
 mebbe :: (Read a) => Maybe [Char] -> Maybe a
 mebbe Nothing = Nothing
@@ -186,6 +187,19 @@ mebbe (Just t) =
     then Nothing
     else Just $ read t
 
+matches :: Eq a => [a] -> [a] -> Bool
+matches [] _ = True
+matches (x:xs) (y:ys) = 
+  (x == y) && matches xs ys
+matches _ [] = False
+
+breakOn :: Eq a => [a] -> [a] -> Maybe [a]
+breakOn [] blah = Just blah
+breakOn match [] = Nothing
+breakOn match (x:xs) = 
+  if matches match (x:xs)
+    then Just (x:xs)
+    else breakOn match xs
 
 bkToTransaction :: (M.Map String String) -> Maybe BankTransaction
 bkToTransaction mp = do
