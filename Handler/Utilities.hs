@@ -18,10 +18,11 @@ import Permissions
 import qualified Data.Maybe as MB
 
 paypalDir = "paypals"
+bankDir = "banks"
 
 paypalForm :: Form FileInfo
 paypalForm = renderDivs $ 
-    fileAFormReq "Upload (UTF-8) paypal transaction file:"
+    fileAFormReq "" 
 
 {-
 sampleForm :: Form (FileInfo, Text)
@@ -34,14 +35,20 @@ getUtilitiesR :: Handler Html
 getUtilitiesR = do
   logid <- requireAuthId
   requireAdmin logid 
-  (formWidget, formEnctype) <- generateFormPost paypalForm
+  (ppFormWidget, ppFormEnctype) <- generateFormPost $ identifyForm "paypal" $ renderDivs $
+    fileAFormReq "Upload (UTF-8) paypal transaction file:"
+  (bkFormWidget, bkFormEnctype) <- generateFormPost $ identifyForm "bank" $ renderDivs $
+    fileAFormReq "Upload (UTF-8) bank transaction file:"
   let submission = Nothing :: Maybe (FileInfo, Text)
   defaultLayout $ do
       aDomId <- newIdent
       setTitle "admin utilities"
       [whamlet|
-        <form method=post enctype=#{formEnctype}>
-          ^{formWidget}
+        <form method=post enctype=#{ppFormEnctype}>
+          ^{ppFormWidget}
+          <input type=submit value="upload">
+        <form method=post enctype=#{bkFormEnctype}>
+          ^{bkFormWidget}
           <input type=submit value="upload">
         In case of error: convert to UTF8 using vim like so:
         <br> :set fileencoding=utf8
@@ -157,6 +164,35 @@ data BankTransaction = BankTransaction
   }
   deriving Show
 
+parseBank :: FilePath -> IO [(M.Map String String)]
+parseBank fp = do
+  meh <- parseCSVFromFile fp 
+  case meh of 
+    Right csvl -> 
+      case 2 > (length csvl) of
+        True -> return []
+        False -> do 
+          let heads = fmap (dropWhile isSpace) $ L.head csvl
+              zipmap heads datas = M.fromList $ zip heads datas
+          return $ fmap (zipmap heads) (L.tail csvl)
+    Left err -> return []
+
+bkToTransaction :: (M.Map String String) -> Maybe BankTransaction
+bkToTransaction mp = do
+  transactionId <- fmap T.pack $ M.lookup "Transaction Number" mp
+  date <- M.lookup "Date" mp 
+  description <- fmap T.pack $ M.lookup "Description" mp
+  memo <- fmap T.pack $ M.lookup "Memo" mp
+  day <- F.parseTime defaultTimeLocale "%-m/%-d/%Y" date
+  deb <- fmap read $ M.lookup "Amount Debit" mp :: Maybe Centi
+  cred <- fmap read $ M.lookup "Amount Credit" mp :: Maybe Centi
+  let check = fmap read (M.lookup "Check Number" mp) :: Maybe Int
+  let deb = fmap read $ M.lookup "Amount Debit" mp :: Maybe Centi
+      cred = fmap read $ M.lookup "Amount Credit" mp :: Maybe Centi
+      amount = maybe (maybe (MkFixed 0) id cred) id deb
+  Just $ BankTransaction transactionId day description memo amount check
+  -- BankTransaction <$> transactionId <*> day <*> description <*> memo <*> amount <*> check
+
 -- add bank transaction, creating emails if necessary.
 addBankTransaction :: UserId -> BankTransaction -> Handler (Maybe (Key Bank))
 addBankTransaction creator trans = do 
@@ -263,11 +299,11 @@ postUtilitiesR = do
   requireAdmin logid
   mbdrid <- checkDuesRate "default" 0
   drid <- unMaybe mbdrid
-  ((result, formWidget), formEnctype) <- runFormPost paypalForm
+  ((ppresult, ppFormWidget), ppFormEnctype) <- runFormPost $ identifyForm "paypal" paypalForm 
+  ((bkresult, ppFormWidget), bkFormEnctype) <- runFormPost $ identifyForm "bank" paypalForm 
   let handlerName = "postUtilitiesR" :: Text
     in do
-      case result of
-        FormMissing -> error "form missing??"
+      case ppresult of
         FormFailure meh -> error $ show meh
         FormSuccess fi -> do
           lift $ createDirectoryIfMissing True paypalDir
@@ -284,11 +320,37 @@ postUtilitiesR = do
             aDomId <- newIdent
             setTitle "Yeeaaaahhh!"
             [whamlet|
+              <br> Paypal transactions imported!
               <br> #{show lrecs} records found in file.
               <br> #{show ltranses} records being valid-looking transactions.
               <br> we wrote #{show lkeys} transaction records.  
               <br> records with transaction IDs already in the database are skipped.
             |]
-         
+        FormMissing -> 
+          case bkresult of
+            FormMissing -> error "form missing??"
+            FormFailure meh -> error $ show meh
+            FormSuccess fi -> do
+              lift $ createDirectoryIfMissing True bankDir
+              now <- lift $ getCurrentTime
+              let fname = bankDir ++ "//bank" ++ (show now)
+              lift $ fileMove fi fname
+              recs <- lift $ parseBank fname
+              let transes = (MB.catMaybes (map bkToTransaction recs))
+              keys <- mapM (addBankTransaction logid) transes 
+              let lrecs = length recs
+                  ltranses = length transes
+                  lkeys = length (MB.catMaybes keys)
+              defaultLayout $ do
+                aDomId <- newIdent
+                setTitle "Yeeaaaahhh!"
+                [whamlet|
+                  <br> Bank transactions imported!
+                  <br> #{show lrecs} records found in file.
+                  <br> #{show ltranses} records being valid-looking transactions.
+                  <br> we wrote #{show lkeys} transaction records.  
+                  <br> records with transaction IDs already in the database are skipped.
+                |]
+           
 
 
