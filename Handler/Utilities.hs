@@ -372,7 +372,6 @@ postUtilitiesR = do
                   <br> #{show ltranses} records being valid-looking transactions.
                   <br> we wrote #{show lkeys} transaction records.  
                   <br> records with transaction IDs already in the database are skipped.
-                  <br> #{ show recs }
                 |]
            
 
