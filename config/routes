@@ -29,3 +29,4 @@
 /transactiontype/#TransactionTypeId TransactionTypeR GET POST
 /addtransactiontype/ AddTransactionTypeR GET POST
 /Paypal PaypalR GET POST
+/bank/ BankR GET POST

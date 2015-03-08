@@ -18,5 +18,7 @@
     <li> Look at the 
       <a href=@{PaypalR}> paypal transactions
     <li> Look at the 
+      <a href=@{BankR}> bank transactions
+    <li> Look at the 
       <a href=@{TransactionTypesR}> transaction types
 
