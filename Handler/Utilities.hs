@@ -166,7 +166,9 @@ data BankTransaction = BankTransaction
 
 parseBank :: FilePath -> IO [(M.Map String String)]
 parseBank fp = do
-  meh <- parseCSVFromFile fp 
+  fstr <- fmap T.pack $ readFile fp 
+  let (_,parze) = T.breakOn (T.pack "Transaction Number") fstr
+      meh = parseCSV fp $ T.unpack parze
   case meh of 
     Right csvl -> 
       case 2 > (length csvl) of
