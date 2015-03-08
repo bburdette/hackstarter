@@ -177,6 +177,14 @@ parseBank fp = do
           return $ fmap (zipmap heads) (L.tail csvl)
     Left err -> return []
 
+mebbe :: (Read a) => Maybe [Char] -> Maybe a
+mebbe Nothing = Nothing
+mebbe (Just t) = 
+  if t == "" 
+    then Nothing
+    else Just $ read t
+
+
 bkToTransaction :: (M.Map String String) -> Maybe BankTransaction
 bkToTransaction mp = do
   transactionId <- fmap T.pack $ M.lookup "Transaction Number" mp
@@ -184,14 +192,12 @@ bkToTransaction mp = do
   description <- fmap T.pack $ M.lookup "Description" mp
   memo <- fmap T.pack $ M.lookup "Memo" mp
   day <- F.parseTime defaultTimeLocale "%-m/%-d/%Y" date
-  deb <- fmap read $ M.lookup "Amount Debit" mp :: Maybe Centi
-  cred <- fmap read $ M.lookup "Amount Credit" mp :: Maybe Centi
-  let check = fmap read (M.lookup "Check Number" mp) :: Maybe Int
-  let deb = fmap read $ M.lookup "Amount Debit" mp :: Maybe Centi
-      cred = fmap read $ M.lookup "Amount Credit" mp :: Maybe Centi
+  let deb = mebbe $ M.lookup "Amount Debit" mp :: Maybe Centi
+      cred = mebbe $ M.lookup "Amount Credit" mp :: Maybe Centi
       amount = maybe (maybe (MkFixed 0) id cred) id deb
+  let check = mebbe (M.lookup "Check Number" mp) :: Maybe Int
   Just $ BankTransaction transactionId day description memo amount check
-  -- BankTransaction <$> transactionId <*> day <*> description <*> memo <*> amount <*> check
+
 
 -- add bank transaction, creating emails if necessary.
 addBankTransaction :: UserId -> BankTransaction -> Handler (Maybe (Key Bank))
@@ -350,6 +356,7 @@ postUtilitiesR = do
                   <br> #{show ltranses} records being valid-looking transactions.
                   <br> we wrote #{show lkeys} transaction records.  
                   <br> records with transaction IDs already in the database are skipped.
+                  <br> #{ show recs }
                 |]
            
 
