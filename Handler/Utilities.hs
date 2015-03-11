@@ -145,6 +145,7 @@ addPaypalTransaction creator trans = do
     Just eml -> return eml
   runDB $ insertUnique $ 
     Paypal (transactionId trans)
+           (name trans)
            (ppType trans)
            (title trans)
            (Just ekey)

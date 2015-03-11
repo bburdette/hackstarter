@@ -28,6 +28,7 @@ getPaypalR = do
           ( paypal ^. PaypalDate,
             paypal ^. PaypalAmountGross,
             paypal ^. PaypalAmountNet,
+            paypal ^. PaypalName,
             paypal ^. PaypalCreator,
             paypal ^. PaypalDescription,
             paypal ^. PaypalMemo,
@@ -42,15 +43,17 @@ getPaypalR = do
             <th> Datetime
             <th> Gross
             <th> Net
+            <th> Name
             <th> Description
             <th> Memo
             <th> Email 
             <th> Creator
-          $forall (E.Value datetime, E.Value gamount, E.Value namount, E.Value creator, E.Value description, E.Value memo, E.Value emailtxt, E.Value creatorIdent) <- ledges
+          $forall (E.Value datetime, E.Value gamount, E.Value namount, E.Value name, E.Value creator, E.Value description, E.Value memo, E.Value emailtxt, E.Value creatorIdent) <- ledges
             <tr>
               <td> #{ show datetime}
               <td> #{ show gamount }
               <td> #{ show namount }
+              <td> #{ name } 
               <td> #{ description }
               <td> #{ memo }
               <td> #{ maybe "" id emailtxt }

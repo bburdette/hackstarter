@@ -7,16 +7,21 @@ User
     createdate Day 
     UniqueUser ident
     deriving Typeable Show
-Email
-    email Text
-    user UserId Maybe
-    verkey Text Maybe
-    UniqueEmail email
+Club
+    name Text
+ClubEmail
+    club ClubId
+    email EmailId
 Project
     name Text
     description Text Maybe
     creator UserId
     createdate UTCTime default=CURRENT_TIMESTAMP
+Email
+    email Text
+    user UserId Maybe
+    verkey Text Maybe
+    UniqueEmail email
 Link
     fromproj ProjectId
     toproj ProjectId
@@ -27,6 +32,7 @@ DuesRate
     UniqueDuesRate name
 Paypal
     transactionid Text
+    name Text
     description Text
     memo Text
     fromemail EmailId Maybe
@@ -45,24 +51,40 @@ Bank
     amount Centi
     checkNumber Int Maybe 
     UniqueBankTransactionId transactionid !force
-Internal
-    -- internal transaction comes from an account OR an external transaction.
-    fromaccount AccountId Maybe
-    fromtransaction PaypalId Maybe
-    -- internal transaction goes to an account OR an external transaction.
-    toaccount AccountId Maybe
-    totransaction PaypalId Maybe
-    -- besides destination and origin, we have:
+PaypalInternal
+    frompaypal PaypalId
+    toaccount AccountId
     creator UserId
     date UTCTime default=CURRENT_TIMESTAMP
-    amount Centi 
+    amount Centi
+    manual Bool 
+BankInternal
+    frombank BankId 
+    toaccount AccountId
+    creator UserId
+    date UTCTime default=CURRENT_TIMESTAMP
+    amount Centi
+    manual Bool 
+Internal
+    fromaccount AccountId
+    toaccount AccountId
+    creator UserId
+    date UTCTime default=CURRENT_TIMESTAMP
+    amount Centi
+    manual Bool 
 Account
     name  Text
+AccountEmail
+    account AccountId
+    email EmailId
 UserAccount
     user  UserId
     account AccountId
 ProjectAccount
     project ProjectId
+    account AccountId
+ClubAccount
+    club    ClubId
     account AccountId
 TransactionType  -- paypal, bank, bitcoin?  maybe better to be HCed types.
     name Text
