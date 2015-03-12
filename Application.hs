@@ -57,6 +57,9 @@ import Handler.TransactionType
 import Handler.AddTransactionType
 import Handler.Paypal
 import Handler.Bank
+import Handler.Clubs
+import Handler.AddClub
+import Handler.Club
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the

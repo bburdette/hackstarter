@@ -10,6 +10,8 @@
     <a href=@{ProjectsR}> projects 
   <li> Look at the 
     <a href=@{PermissionsR}> permissions 
+  <li> Look at the 
+    <a href=@{ClubsR}> clubs 
   $if isadmin
     <li> Look at the 
       <a href=@{EmailsR}> emails 

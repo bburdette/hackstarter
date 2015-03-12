@@ -30,3 +30,6 @@
 /addtransactiontype/ AddTransactionTypeR GET POST
 /Paypal PaypalR GET POST
 /bank/ BankR GET POST
+/clubs/ ClubsR GET POST
+/addclub/ AddClubR GET POST
+/club/#ClubId ClubR GET POST
