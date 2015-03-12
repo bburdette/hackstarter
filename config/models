@@ -9,6 +9,7 @@ User
     deriving Typeable Show
 Club
     name Text
+    UniqueClub name
 ClubEmail
     club ClubId
     email EmailId

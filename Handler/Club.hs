@@ -26,6 +26,8 @@ getClubR cid = do
           <form method=post enctype=#{enc}> 
             ^{widge}
             <input type=submit value=ok>
+          <form method=post enctype=#{enc}>
+            <input type=submit name="delete" value="delete">
         |]
     Nothing -> error $ "club id not found: " ++ show cid
       
@@ -33,12 +35,18 @@ postClubR :: ClubId -> Handler Html
 postClubR cid = do 
   login <- requireAuthId
   requireAdmin login
-  ((res, userWidget),enctype) <- runFormPost $ clubForm Nothing
-  case res of 
-    FormSuccess club -> do 
-      runDB $ replace cid club
+  mbDel <- lookupPostParam "delete"
+  case mbDel of 
+    Just del -> do 
+      _ <- runDB $ delete cid
       redirect ClubsR
-    _ -> error $ "some kind of problem "
+    Nothing -> do 
+      ((res, userWidget),enctype) <- runFormPost $ clubForm Nothing
+      case res of 
+        FormSuccess club -> do 
+          runDB $ replace cid club
+          redirect ClubsR
+        _ -> error $ "some kind of problem "
 
 {-
 postDuesRateR :: DuesRateId -> Handler Html

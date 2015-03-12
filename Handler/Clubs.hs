@@ -22,6 +22,7 @@ getClubsR = do
           <tr>
             <td> 
               <a href=@{ClubR id }> #{ name }
+      <br>
       <a href=@{AddClubR}> new club
       |]
 
