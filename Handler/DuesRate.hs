@@ -28,7 +28,8 @@ getDuesRateR dri = do
 
 postDuesRateR :: DuesRateId -> Handler Html
 postDuesRateR dri = do
-  _ <- requireAuthId
+  login <- requireAuthId
+  requireAdmin login
   mbDel <- lookupPostParam "delete"
   case mbDel of 
     Just del -> do 

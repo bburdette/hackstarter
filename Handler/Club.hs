@@ -2,6 +2,8 @@ module Handler.Club where
 
 import Import
 import Permissions
+import qualified Database.Esqueleto      as E
+import           Database.Esqueleto      ((^.))
 
 data ClubForm = ClubForm
   {
@@ -12,6 +14,16 @@ clubForm :: Maybe Club -> Form Club
 clubForm dr = renderDivs $ Club
  <$> areq textField "Club name" (clubName <$> dr) 
 
+data AccountForm = AccountForm
+  {
+  afName :: Text
+  }
+
+accountForm :: Maybe Account -> Form Account
+accountForm acc = renderDivs $ Account
+ <$> areq textField "Account name" (accountName <$> acc) 
+
+
 getClubR :: ClubId -> Handler Html
 getClubR cid = do 
   login <- requireAuthId
@@ -19,7 +31,15 @@ getClubR cid = do
   mbclub <- runDB $ get cid
   case mbclub of 
     Just _ -> do
-      (widge,enc) <- generateFormPost $ clubForm mbclub
+      (widge,enc) <- generateFormPost $ identifyForm "club" $ clubForm mbclub
+      (widge2,enc2) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
+      -- read club accounts, account emails.
+      accounts <- runDB $ E.select $ E.from $ \(E.InnerJoin clubaccount account) -> do 
+        E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
+        E.where_ $ clubaccount ^. ClubAccountAccount E.==. account ^. AccountId
+        return (clubaccount ^. ClubAccountId, 
+                account ^. AccountId,
+                account ^. AccountName)
       defaultLayout $ do
         [whamlet|
           Club Maintenance
@@ -28,6 +48,16 @@ getClubR cid = do
             <input type=submit value=ok>
           <form method=post enctype=#{enc}>
             <input type=submit name="delete" value="delete">
+          <table>
+            <th>
+              <td> account name 
+            $forall (E.Value caid, E.Value accountid, E.Value accountname) <- accounts
+              <tr>
+                <td> #{ accountname }
+          <form method=post enctype=#{enc}> 
+            ^{widge2}
+            <input type=submit value=add existing email>
+  
         |]
     Nothing -> error $ "club id not found: " ++ show cid
       
@@ -41,12 +71,22 @@ postClubR cid = do
       _ <- runDB $ delete cid
       redirect ClubsR
     Nothing -> do 
-      ((res, userWidget),enctype) <- runFormPost $ clubForm Nothing
+      ((res, userWidget),enctype) <- runFormPost $ identifyForm "club" $ clubForm Nothing
+      ((res2, widget2),enctype) <- runFormPost $ identifyForm "account" $ accountForm Nothing
       case res of 
         FormSuccess club -> do 
           runDB $ replace cid club
           redirect ClubsR
-        _ -> error $ "some kind of problem "
+        FormFailure errs -> error $ "Errors: " ++ show errs 
+        -- FormFailure errs -> error $ "Errors: "
+        FormMissing -> 
+          case res2 of 
+            FormSuccess account -> do
+              mbaccid <- runDB $ insert $ account 
+              runDB $ insert $ ClubAccount cid mbaccid
+              redirect $ ClubR cid
+            FormFailure errs -> error $ "Errors: " ++ show errs 
+            FormMissing -> error $ "form not found."
 
 {-
 postDuesRateR :: DuesRateId -> Handler Html
