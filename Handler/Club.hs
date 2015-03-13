@@ -33,6 +33,17 @@ accountForm :: Maybe Account -> Form Account
 accountForm acc = renderDivs $ Account
  <$> areq textField "add new account:" (accountName <$> acc) 
 
+data ClubAccountEmailForm = ClubAccountEmailForm
+  {
+  accountId :: AccountId,
+  emailId :: EmailId 
+  }
+
+clubAccountEmail :: [(Text, Key Account)] -> [(Text, Key Email)] -> Maybe ClubAccountEmailForm -> Form ClubAccountEmailForm
+clubAccountEmail accounts emails caef = renderDivs $ ClubAccountEmailForm
+  <$> areq (selectFieldList accounts) "Account" (accountId <$> caef)
+  <*> areq (selectFieldList emails) "Emails" (emailId <$> caef)
+
 
 getClubR :: ClubId -> Handler Html
 getClubR cid = do 
@@ -57,6 +68,8 @@ getClubR cid = do
         return (clubemail ^. ClubEmailId, 
                 email ^. EmailId,
                 email ^. EmailEmail)
+      (cewidge,ceenc) <- generateFormPost $ identifyForm "accountemail" $ 
+        clubAccountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
       defaultLayout $ do
         [whamlet|
           Club Maintenance
@@ -85,7 +98,9 @@ getClubR cid = do
           <form method=post enctype=#{aenc}> 
             ^{awidge}
             <input type=submit value=add account>
-  
+          <form method=post enctype=#{aenc}> 
+            ^{cewidge}
+            <input type=submit value=add email>
         |]
     Nothing -> error $ "club id not found: " ++ show cid
       
@@ -99,9 +114,11 @@ postClubR cid = do
       _ <- runDB $ delete cid
       redirect ClubsR
     Nothing -> do 
-      ((c_res, userWidget),enctype) <- runFormPost $ identifyForm "club" $ clubForm Nothing
-      ((a_res, widget2),enctype) <- runFormPost $ identifyForm "account" $ accountForm Nothing
-      ((e_res, widget2),enctype) <- runFormPost $ identifyForm "email" $ emailForm Nothing
+      ((c_res, _),_) <- runFormPost $ identifyForm "club" $ clubForm Nothing
+      ((a_res, _),_) <- runFormPost $ identifyForm "account" $ accountForm Nothing
+      ((e_res, _),_) <- runFormPost $ identifyForm "email" $ emailForm Nothing
+      ((ce_res,_),_) <- runFormPost $ identifyForm "accountemail" $ 
+        clubAccountEmail [] [] Nothing
       case c_res of 
         FormSuccess club -> do 
           runDB $ replace cid club
@@ -126,7 +143,13 @@ postClubR cid = do
                       runDB $ insert $ ClubEmail cid emid
                       redirect $ ClubR cid
                 FormFailure errs -> error $ "Errors: " ++ show errs 
-                FormMissing -> error "no form" 
+                FormMissing -> 
+                  case ce_res of  
+                    FormSuccess accemlform -> do
+                      wut <- runDB $ insert $ AccountEmail (accountId accemlform) (emailId accemlform)
+                      redirect $ ClubR cid
+                    FormFailure errs -> error $ "Errors: " ++ show errs 
+                    FormMissing -> error "no form" 
 
 {-
 postDuesRateR :: DuesRateId -> Handler Html
