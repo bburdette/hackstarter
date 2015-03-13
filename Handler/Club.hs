@@ -21,7 +21,7 @@ data AccountForm = AccountForm
 
 accountForm :: Maybe Account -> Form Account
 accountForm acc = renderDivs $ Account
- <$> areq textField "Account name" (accountName <$> acc) 
+ <$> areq textField "add new account:" (accountName <$> acc) 
 
 
 getClubR :: ClubId -> Handler Html
@@ -40,6 +40,12 @@ getClubR cid = do
         return (clubaccount ^. ClubAccountId, 
                 account ^. AccountId,
                 account ^. AccountName)
+      emails <- runDB $ E.select $ E.from $ \(E.InnerJoin clubemail email) -> do 
+        E.where_ $ clubemail ^. ClubEmailClub E.==. (E.val cid)
+        E.where_ $ clubemail ^. ClubEmailEmail E.==. email ^. EmailId
+        return (clubemail ^. ClubEmailId, 
+                email ^. EmailId,
+                email ^. EmailEmail)
       defaultLayout $ do
         [whamlet|
           Club Maintenance
@@ -50,10 +56,18 @@ getClubR cid = do
             <input type=submit name="delete" value="delete">
           <table>
             <th>
-              <td> account name 
+              <td> club emails 
+            $forall (E.Value ceid, E.Value emailid, E.Value email) <- emails
+              <tr>
+                <td> #{ email }
+          <br>
+          <table>
+            <th>
+              <td> club accounts 
             $forall (E.Value caid, E.Value accountid, E.Value accountname) <- accounts
               <tr>
                 <td> #{ accountname }
+          <br>
           <form method=post enctype=#{enc}> 
             ^{widge2}
             <input type=submit value=add existing email>
