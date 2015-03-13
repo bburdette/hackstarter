@@ -14,6 +14,16 @@ clubForm :: Maybe Club -> Form Club
 clubForm dr = renderDivs $ Club
  <$> areq textField "Club name" (clubName <$> dr) 
 
+data EmailForm = EmailForm
+  {
+  emName :: Text
+  }
+
+emailForm :: Maybe EmailForm -> Form EmailForm
+emailForm emlf = renderDivs $ EmailForm
+ <$> areq textField "add new Email:" (emName <$> emlf) 
+
+
 data AccountForm = AccountForm
   {
   afName :: Text
@@ -32,7 +42,8 @@ getClubR cid = do
   case mbclub of 
     Just _ -> do
       (widge,enc) <- generateFormPost $ identifyForm "club" $ clubForm mbclub
-      (widge2,enc2) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
+      (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
+      (ewidge,eenc) <- generateFormPost $ identifyForm "email" $ emailForm Nothing
       -- read club accounts, account emails.
       accounts <- runDB $ E.select $ E.from $ \(E.InnerJoin clubaccount account) -> do 
         E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
@@ -61,6 +72,9 @@ getClubR cid = do
               <tr>
                 <td> #{ email }
           <br>
+          <form method=post enctype=#{eenc}> 
+            ^{ewidge}
+            <input type=submit value=add existing email>
           <table>
             <th>
               <td> club accounts 
@@ -68,9 +82,9 @@ getClubR cid = do
               <tr>
                 <td> #{ accountname }
           <br>
-          <form method=post enctype=#{enc}> 
-            ^{widge2}
-            <input type=submit value=add existing email>
+          <form method=post enctype=#{aenc}> 
+            ^{awidge}
+            <input type=submit value=add account>
   
         |]
     Nothing -> error $ "club id not found: " ++ show cid
@@ -85,22 +99,34 @@ postClubR cid = do
       _ <- runDB $ delete cid
       redirect ClubsR
     Nothing -> do 
-      ((res, userWidget),enctype) <- runFormPost $ identifyForm "club" $ clubForm Nothing
-      ((res2, widget2),enctype) <- runFormPost $ identifyForm "account" $ accountForm Nothing
-      case res of 
+      ((c_res, userWidget),enctype) <- runFormPost $ identifyForm "club" $ clubForm Nothing
+      ((a_res, widget2),enctype) <- runFormPost $ identifyForm "account" $ accountForm Nothing
+      ((e_res, widget2),enctype) <- runFormPost $ identifyForm "email" $ emailForm Nothing
+      case c_res of 
         FormSuccess club -> do 
           runDB $ replace cid club
           redirect ClubsR
         FormFailure errs -> error $ "Errors: " ++ show errs 
         -- FormFailure errs -> error $ "Errors: "
         FormMissing -> 
-          case res2 of 
+          case a_res of 
             FormSuccess account -> do
               mbaccid <- runDB $ insert $ account 
               runDB $ insert $ ClubAccount cid mbaccid
               redirect $ ClubR cid
             FormFailure errs -> error $ "Errors: " ++ show errs 
-            FormMissing -> error $ "form not found."
+            FormMissing -> do
+              case e_res of  
+                FormSuccess emlform -> do
+                  -- does this email exist?
+                  mbemail <- runDB $ selectFirst [EmailEmail ==. (emName emlform)] []
+                  case mbemail of 
+                    Nothing -> error "email not found: " 
+                    Just (Entity emid eml) -> do
+                      runDB $ insert $ ClubEmail cid emid
+                      redirect $ ClubR cid
+                FormFailure errs -> error $ "Errors: " ++ show errs 
+                FormMissing -> error "no form" 
 
 {-
 postDuesRateR :: DuesRateId -> Handler Html
