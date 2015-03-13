@@ -117,8 +117,21 @@ postClubR cid = do
       ((c_res, _),_) <- runFormPost $ identifyForm "club" $ clubForm Nothing
       ((a_res, _),_) <- runFormPost $ identifyForm "account" $ accountForm Nothing
       ((e_res, _),_) <- runFormPost $ identifyForm "email" $ emailForm Nothing
+      accounts <- runDB $ E.select $ E.from $ \(E.InnerJoin clubaccount account) -> do 
+        E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
+        E.where_ $ clubaccount ^. ClubAccountAccount E.==. account ^. AccountId
+        return (clubaccount ^. ClubAccountId, 
+                account ^. AccountId,
+                account ^. AccountName)
+      emails <- runDB $ E.select $ E.from $ \(E.InnerJoin clubemail email) -> do 
+        E.where_ $ clubemail ^. ClubEmailClub E.==. (E.val cid)
+        E.where_ $ clubemail ^. ClubEmailEmail E.==. email ^. EmailId
+        return (clubemail ^. ClubEmailId, 
+                email ^. EmailId,
+                email ^. EmailEmail)
       ((ce_res,_),_) <- runFormPost $ identifyForm "accountemail" $ 
-        clubAccountEmail [] [] Nothing
+        clubAccountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
+      -- ((ce_res,_),_) <- runFormPost $ identifyForm "accountemail" $  clubAccountEmail [] [] Nothing
       case c_res of 
         FormSuccess club -> do 
           runDB $ replace cid club
