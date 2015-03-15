@@ -87,7 +87,7 @@ getClubR cid = do
         clubAccountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
       defaultLayout $ do
         [whamlet|
-          Club Maintenance
+          <h4> Club Maintenance
           <form method=post enctype=#{enc}> 
             ^{widge}
             <input type=submit value=ok>
@@ -104,24 +104,6 @@ getClubR cid = do
             ^{ewidge}
             <input type=submit value=add existing email>
           <table>
-            <tr>
-              <th> club accounts 
-            $forall (E.Value caid, E.Value accountid, E.Value accountname) <- accounts
-              <tr>
-                <td> #{ accountname }
-                <td> #{ show caid }
-          <br>
-          <table>
-            <tr>
-              <th> account emails
-            $forall (E.Value caid, E.Value aeid, E.Value emailid, E.Value emailtxt) <- accountemails
-              <tr>
-                <td> #{ show caid }
-                <td> #{ show aeid }
-                <td> #{ show emailid }
-                <td> #{ emailtxt }
-          <br>
-           <table>
             <tr>
               <th> account 
               <th> email
