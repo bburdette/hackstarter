@@ -77,6 +77,12 @@ getClubR cid = do
                   accountemail ^. AccountEmailId,
                   email ^. EmailId, 
                   email ^. EmailEmail)
+      let accountEmailGrid = foldl (addacct accountemails) [] accounts
+          addacct accemls lst (clubAccountId, accountId, accountName) = 
+            let emls = filter (\(acct,_,_,_) -> acct == accountId) accemls
+                news = (accountName, E.Value "") : 
+                  (fmap (\(_,_,_,emltxt) -> (E.Value "", emltxt)) emls) in 
+              lst ++ news
       (cewidge,ceenc) <- generateFormPost $ identifyForm "accountemail" $ 
         clubAccountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
       defaultLayout $ do
@@ -88,8 +94,8 @@ getClubR cid = do
           <form method=post enctype=#{enc}>
             <input type=submit name="delete" value="delete">
           <table>
-            <th>
-              <td> club emails 
+            <tr>
+              <th> club emails 
             $forall (E.Value ceid, E.Value emailid, E.Value email) <- emails
               <tr>
                 <td> #{ email }
@@ -98,22 +104,31 @@ getClubR cid = do
             ^{ewidge}
             <input type=submit value=add existing email>
           <table>
-            <th>
-              <td> club accounts 
+            <tr>
+              <th> club accounts 
             $forall (E.Value caid, E.Value accountid, E.Value accountname) <- accounts
               <tr>
                 <td> #{ accountname }
                 <td> #{ show caid }
           <br>
-           <table>
-            <th>
-              <td> account emails
+          <table>
+            <tr>
+              <th> account emails
             $forall (E.Value caid, E.Value aeid, E.Value emailid, E.Value emailtxt) <- accountemails
               <tr>
                 <td> #{ show caid }
                 <td> #{ show aeid }
                 <td> #{ show emailid }
                 <td> #{ emailtxt }
+          <br>
+           <table>
+            <tr>
+              <th> account 
+              <th> email
+            $forall (E.Value account, E.Value email) <- accountEmailGrid
+              <tr>
+                <td> #{ account }
+                <td> #{ email }
           <br>
           <form method=post enctype=#{aenc}> 
             ^{awidge}
