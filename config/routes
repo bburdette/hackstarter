@@ -34,3 +34,5 @@
 /addclub/ AddClubR GET POST
 /club/#ClubId ClubR GET POST
 /clubemailremove/#ClubEmailId ClubEmailRemoveR POST
+/clubAccountDelete/#ClubAccountId ClubAccountDeleteR POST
+/accountEmailRemove/#AccountEmailId AccountEmailRemoveR POST

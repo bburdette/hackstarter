@@ -80,8 +80,8 @@ getClubR cid = do
       let accountEmailGrid = foldl (addacct accountemails) [] accounts
           addacct accemls lst (clubAccountId, accountId, accountName) = 
             let emls = filter (\(acct,_,_,_) -> acct == accountId) accemls
-                news = (accountName, E.Value "") : 
-                  (fmap (\(_,_,_,emltxt) -> (E.Value "", emltxt)) emls) in 
+                news = (accountName, Just clubAccountId, E.Value "", Nothing) : 
+                  (fmap (\(_,acctemlid,_,emltxt) -> (E.Value "", Nothing, emltxt, Just acctemlid)) emls) in 
               lst ++ news
       (cewidge,ceenc) <- generateFormPost $ identifyForm "accountemail" $ 
         clubAccountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
@@ -109,10 +109,22 @@ getClubR cid = do
             <tr>
               <th> account 
               <th> email
-            $forall (E.Value account, E.Value email) <- accountEmailGrid
+            $forall (E.Value account, mbclubacctid, E.Value email, mbaccountemailid) <- accountEmailGrid
               <tr>
                 <td> #{ account }
                 <td> #{ email }
+                <td>
+                  $case mbclubacctid 
+                    $of (Just (E.Value clubacctid))
+                      <td> 
+                        <a href="#" onClick="post('@{ClubAccountDeleteR clubacctid}', {})"> delete
+                    $of Nothing
+                      $case mbaccountemailid 
+                        $of (Just (E.Value accountemailid)) 
+                          <td> 
+                            <a href="#" onClick="post('@{AccountEmailRemoveR accountemailid}', {})"> remove
+                        $of Nothing
+                            
           <br>
           <form method=post enctype=#{aenc}> 
             ^{awidge}

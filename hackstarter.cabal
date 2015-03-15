@@ -53,6 +53,8 @@ library
                      Handler.AddClub
                      Handler.Club
                      Handler.ClubEmailRemove
+                     Handler.ClubAccountDelete
+                     Handler.AccountEmailRemove
                      Permissions
 
     if flag(dev) || flag(library-only)
