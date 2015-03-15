@@ -99,6 +99,8 @@ getClubR cid = do
             $forall (E.Value ceid, E.Value emailid, E.Value email) <- emails
               <tr>
                 <td> #{ email }
+                <td> 
+                  <a href="#" onClick="post('@{ClubEmailRemoveR ceid}', {})"> remove
           <br>
           <form method=post enctype=#{eenc}> 
             ^{ewidge}

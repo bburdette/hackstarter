@@ -33,3 +33,4 @@
 /clubs/ ClubsR GET POST
 /addclub/ AddClubR GET POST
 /club/#ClubId ClubR GET POST
+/clubemailremove/#ClubEmailId ClubEmailRemoveR POST
