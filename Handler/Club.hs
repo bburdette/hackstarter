@@ -68,6 +68,15 @@ getClubR cid = do
         return (clubemail ^. ClubEmailId, 
                 email ^. EmailId,
                 email ^. EmailEmail)
+      accountemails <- runDB $ E.select $ E.from $ 
+        \(E.InnerJoin (E.InnerJoin clubaccount accountemail) email) -> do
+          E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
+          E.where_ $ clubaccount ^. ClubAccountAccount E.==. accountemail ^. AccountEmailAccount
+          E.where_ $ accountemail ^. AccountEmailEmail  E.==. email ^. EmailId
+          return (clubaccount ^. ClubAccountAccount, 
+                  accountemail ^. AccountEmailId,
+                  email ^. EmailId, 
+                  email ^. EmailEmail)
       (cewidge,ceenc) <- generateFormPost $ identifyForm "accountemail" $ 
         clubAccountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
       defaultLayout $ do
@@ -94,6 +103,17 @@ getClubR cid = do
             $forall (E.Value caid, E.Value accountid, E.Value accountname) <- accounts
               <tr>
                 <td> #{ accountname }
+                <td> #{ show caid }
+          <br>
+           <table>
+            <th>
+              <td> account emails
+            $forall (E.Value caid, E.Value aeid, E.Value emailid, E.Value emailtxt) <- accountemails
+              <tr>
+                <td> #{ show caid }
+                <td> #{ show aeid }
+                <td> #{ show emailid }
+                <td> #{ emailtxt }
           <br>
           <form method=post enctype=#{aenc}> 
             ^{awidge}

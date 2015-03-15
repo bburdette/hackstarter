@@ -24,13 +24,6 @@ paypalForm :: Form FileInfo
 paypalForm = renderDivs $ 
     fileAFormReq "" 
 
-{-
-sampleForm :: Form (FileInfo, Text)
-sampleForm = renderDivs $ (,)
-    <$> fileAFormReq "Upload paypal transaction file:"
-    <*> areq textField "Save as: " Nothing
--}
-
 getUtilitiesR :: Handler Html
 getUtilitiesR = do
   logid <- requireAuthId
