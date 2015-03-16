@@ -25,15 +25,6 @@ emailForm emlf = renderDivs $ EmailForm
  <$> areq textField "add new Email:" (emName <$> emlf) 
 
 
-data AccountForm = AccountForm
-  {
-  afName :: Text
-  }
-
-accountForm :: Maybe Account -> Form Account
-accountForm acc = renderDivs $ Account
- <$> areq textField "add new account:" (accountName <$> acc) 
-
 getClubR :: ClubId -> Handler Html
 getClubR cid = do 
   login <- requireAuthId

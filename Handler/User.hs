@@ -3,6 +3,7 @@ module Handler.User where
 import Import
 import Permissions
 import UserForm
+import AccountEmailForm
 import Data.Time.Clock
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
@@ -69,6 +70,37 @@ addPermForm :: [(Text, Key Permission)] -> Form PermId
 addPermForm permlist = renderDivs $ PermId
  <$> areq (selectFieldList permlist) "Add Permission" Nothing
 
+getUserAccounts uid = do
+  blah <- runDB $ E.select $ E.from $ 
+    \(E.InnerJoin useraccount account) -> do
+      E.where_ $ useraccount ^. UserAccountUser E.==. E.val uid
+      E.where_ $ useraccount ^. UserAccountAccount E.==. account ^. AccountId
+      return (useraccount ^. UserAccountId,
+              account ^. AccountId,
+              account ^. AccountName)
+  return blah
+ 
+getUserAccountEmails uid = do
+  accountemails <- runDB $ E.select $ E.from $ 
+    \(E.InnerJoin (E.InnerJoin useraccount accountemail) email) -> do
+      E.where_ $ useraccount ^. UserAccountUser E.==. (E.val uid)
+      E.where_ $ useraccount ^. UserAccountAccount E.==. accountemail ^. AccountEmailAccount
+      E.where_ $ accountemail ^. AccountEmailEmail  E.==. email ^. EmailId
+      return (useraccount ^. UserAccountAccount, 
+              accountemail ^. AccountEmailId,
+              email ^. EmailId, 
+              email ^. EmailEmail)
+  return accountemails
+
+accountEmailGrid accounts accountemails = 
+  foldl (addacct accountemails) [] accounts
+  where addacct accemls lst (userAccountId, accountId, accountName) = 
+          let emls = filter (\(acct,_,_,_) -> acct == accountId) accemls
+              news = (accountName, Just userAccountId, E.Value "", Nothing) : 
+                (fmap (\(_,acctemlid,_,emltxt) -> (E.Value "", Nothing, emltxt, Just acctemlid)) emls) in 
+            lst ++ news
+
+
 -- admin user maintenance.
 -- admin can see, change dues rate.
 -- admin can add permissions.
@@ -81,11 +113,21 @@ getUserAdminR logid userId = do
   addpermissions <- getPermAddList logid admin 
   userperms <- getUserPermissions userId
   useremails <- getUserEmails userId
+  accounts <- getUserAccounts userId
+  accountEmails <- getUserAccountEmails userId
+  let acctemlgrid = accountEmailGrid accounts accountEmails
   case mbUser of 
     Nothing -> error "user id not found."
     Just user -> do 
       (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userFormAdmin (utctDay curtime) (drList duesrates) (Just user))
       (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm addpermissions 
+      (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
+      (uewidge,ueenc) <- generateFormPost $ identifyForm "accountemail" $ 
+        accountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> 
+                            (acctxt, accid)) accounts) 
+                     (fmap (\(Entity id email) -> 
+                            (emailEmail email, id)) useremails) 
+                     Nothing
       defaultLayout $ do 
         $(widgetFile "user_admin")
 
@@ -153,12 +195,21 @@ postUserR uid =
         True -> do 
           duesrates <- getDuesRates
           curtime <- lift getCurrentTime
+          useremails <- getUserEmails uid
+          accounts <- getUserAccounts uid
+          permissions <- getPermissions
           ((u_result, formWidget), formEnctype) 
               <- runFormPost $
                   identifyForm "user" (userFormAdmin (utctDay curtime) (drList duesrates) Nothing)   
-          permissions <- getPermissions
           ((p_result, permWidget), permEnctype) 
               <- runFormPost $ identifyForm "perm" (addPermForm (permList permissions)) 
+          ((a_res, _), _) <- runFormPost $ identifyForm "account" $ accountForm Nothing
+          ((ae_res, _), _) <- runFormPost $ identifyForm "accountemail" $ 
+            accountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> 
+                                (acctxt, accid)) accounts) 
+                         (fmap (\(Entity id email) -> 
+                                (emailEmail email, id)) useremails) 
+                         Nothing
           case u_result of
             FormSuccess user -> do 
               del <- lookupPostParam "delete"
@@ -172,11 +223,20 @@ postUserR uid =
                   redirect UsersR
                 _ -> do 
                   error "unhandled form button"
-            _ -> 
-              case p_result of 
-                FormSuccess perm -> do
-                  res <- runDB $ insert $ UserPermission uid (pid perm) logid
-                  redirect $ UserR uid 
-                _ -> error "unhandled form"
+            _ -> case p_result of 
+              FormSuccess perm -> do
+                res <- runDB $ insert $ UserPermission uid (pid perm) logid
+                redirect $ UserR uid 
+              _ -> case a_res of 
+                FormSuccess acct -> do 
+                  accid <- runDB $ insert acct 
+                  _ <- runDB $ insert $ UserAccount uid accid
+                  redirect $ UserR uid
+                _ -> case ae_res of 
+                  FormSuccess aef -> do 
+                    _ <- runDB $ insert $ AccountEmail (accountId aef) (emailId aef)   
+                    redirect $ UserR uid
+                  _ -> error "blah"
+                        
 
 

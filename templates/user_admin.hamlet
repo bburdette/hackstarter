@@ -17,6 +17,23 @@
       <td> 
         <a href="#" onClick="post('@{UserPermissionDeleteR upid}', {})"> remove
 
+<table>
+  <tr>
+    <th> account 
+    <th> email
+  $forall (E.Value account, mbuseracctid, E.Value email, mbaccountemailid) <- acctemlgrid
+    <tr>
+      <td> #{ account }
+      <td> #{ email }
+
+<form method=post enctype=#{aenc}>
+  ^{awidge}
+  <input type=submit value="add account">
+
+<form method=post enctype=#{ueenc}>
+  ^{uewidge}
+  <input type=submit value="add account email">
+
 <form method=post enctype=#{permEnctype}>
   ^{permWidget}
   <input type=submit value="add permission">

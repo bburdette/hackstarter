@@ -2,7 +2,9 @@ module AccountEmailForm where
 
 import Import
 
-
+accountForm :: Maybe Account -> Form Account
+accountForm acc = renderDivs $ Account
+ <$> areq textField "add new account:" (accountName <$> acc) 
 
 data AccountEmailForm = AccountEmailForm
   {
