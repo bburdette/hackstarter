@@ -11,12 +11,6 @@ getDuesRates = do
 drList :: [(Entity DuesRate)] -> [(Text, Key DuesRate)]
 drList = fmap (\(Entity blah vole) -> (duesRateName vole, blah))
 
-orzero :: Maybe User -> Maybe Int
-orzero mbuser = 
-  case mbuser of
-    Nothing -> Just 0
-    _ -> userBalance <$> mbuser
-
 ornow :: Day -> Maybe User -> Maybe Day
 ornow curday mbuser = 
   case mbuser of 
@@ -29,7 +23,6 @@ userFormSelf user = renderDivs $ User
   <*> areq textField "name" (Just $ userName user)
   <*> aopt passwordField "Pwd" (Just $ userPassword user)
   <*> pure (userDuesrate user)
-  <*> areq intField ("balance" { fsAttrs = [("readonly", "")] }) (Just $ userBalance user) 
   <*> areq dayField ("Create Date" { fsAttrs = [("readonly", "")] }) 
         (Just $ userCreatedate user) 
 
@@ -39,7 +32,6 @@ userFormAdmin curday duesrates user = renderDivs $ User
   <*> areq textField "name" (userName <$> user)
   <*> aopt passwordField "Pwd" (userPassword <$> user)
   <*> areq (selectFieldList duesrates) "Dues rate" (userDuesrate <$> user)
-  <*> areq intField ("balance" { fsAttrs = [("readonly", "")] }) (orzero user) 
   <*> areq dayField ("Create Date" { fsAttrs = [("readonly", "")] }) 
         (ornow curday user) 
 

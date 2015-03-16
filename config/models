@@ -3,7 +3,6 @@ User
     name Text
     password Text Maybe
     duesrate DuesRateId
-    balance Int
     createdate Day 
     UniqueUser ident
     deriving Typeable Show
