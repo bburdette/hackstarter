@@ -13,6 +13,7 @@ Flag library-only
 
 library
     exposed-modules: Application
+                     AccountEmailForm
                      DuesRateForm
                      PermissionForm 
                      Foundation
