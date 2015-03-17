@@ -37,7 +37,8 @@ getUtilitiesR :: Handler Html
 getUtilitiesR = do
   logid <- requireAuthId
   requireAdmin logid 
-  (mtFormWidget, mtFormEnctype) <- generateFormPost $ identifyForm "ppproc" $ mehForm (T.pack "blah")
+  (cppuFormWidget, cppuFormEnctype) <- generateFormPost $ identifyForm "cppu" $ mehForm (T.pack "a")
+  (cpptFormWidget, cpptFormEnctype) <- generateFormPost $ identifyForm "cppt" $ mehForm (T.pack "a")
   (ppFormWidget, ppFormEnctype) <- generateFormPost $ identifyForm "paypal" $ renderDivs $
     fileAFormReq "Upload (UTF-8) paypal transaction file:"
   (bkFormWidget, bkFormEnctype) <- generateFormPost $ identifyForm "bank" $ renderDivs $
@@ -51,8 +52,11 @@ getUtilitiesR = do
           ^{ppFormWidget}
           <input type=submit value="upload">
         <form method=post> 
-          ^{mtFormWidget}
-          <input type=submit name="paypal" value="create paypal users">
+          ^{cppuFormWidget}
+          <input type=submit value="create paypal users">
+        <form method=post> 
+          ^{cpptFormWidget}
+          <input type=submit value="create paypal transactions">
         <form method=post enctype=#{bkFormEnctype}>
           ^{bkFormWidget}
           <input type=submit value="upload">
@@ -328,7 +332,8 @@ postUtilitiesR = do
   -- blah <- M.lookup "name"
   mbdrid <- checkDuesRate "default" 0
   drid <- unMaybe mbdrid
-  ((cppresult, _), _) <- runFormPost $ identifyForm "ppproc" (mehForm "meh")
+  ((cppuresult, _), _) <- runFormPost $ identifyForm "cppu" (mehForm "meh")
+  ((cpptresult, _), _) <- runFormPost $ identifyForm "cppt" (mehForm "meh")
   ((ppresult, ppFormWidget), ppFormEnctype) <- runFormPost $ identifyForm "paypal" paypalForm 
   ((bkresult, ppFormWidget), bkFormEnctype) <- runFormPost $ identifyForm "bank" paypalForm 
   let handlerName = "postUtilitiesR" :: Text
@@ -380,14 +385,21 @@ postUtilitiesR = do
                   <br> we wrote #{show lkeys} transaction records.  
                   <br> records with transaction IDs already in the database are skipped.
                 |]
-            FormMissing -> case cppresult of 
+            FormMissing -> case cppuresult of 
               FormSuccess meh -> do 
                 defaultLayout $ do [whamlet|
-                  result:
+                  cppuresult:
                   <br> #{ (mehVal meh) }
                 |]
               FormFailure err -> error $ show err
-              FormMissing -> error "form missing"
+              FormMissing -> case cpptresult of 
+                FormSuccess meh -> do 
+                  defaultLayout $ do [whamlet|
+                    cpptresult:
+                    <br> #{ (mehVal meh) }
+                  |]
+                FormFailure err -> error $ show err
+                FormMissing -> error "form missing"
              
            
 
