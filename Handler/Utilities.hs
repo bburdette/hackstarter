@@ -29,16 +29,16 @@ data Meh = Meh
   mehVal :: Text
   }
 
-mehForm :: Text -> Form Meh
-mehForm txt = renderDivs $ Meh 
-  <$> areq hiddenField "" (Just txt)
+mehForm :: Form Meh
+mehForm = renderDivs $ Meh 
+  <$> areq hiddenField "" (Just (T.pack "a"))
 
 getUtilitiesR :: Handler Html
 getUtilitiesR = do
   logid <- requireAuthId
   requireAdmin logid 
-  (cppuFormWidget, cppuFormEnctype) <- generateFormPost $ identifyForm "cppu" $ mehForm (T.pack "a")
-  (cpptFormWidget, cpptFormEnctype) <- generateFormPost $ identifyForm "cppt" $ mehForm (T.pack "a")
+  (cppuFormWidget, cppuFormEnctype) <- generateFormPost $ identifyForm "cppu" mehForm
+  (cpptFormWidget, cpptFormEnctype) <- generateFormPost $ identifyForm "cppt" mehForm
   (ppFormWidget, ppFormEnctype) <- generateFormPost $ identifyForm "paypal" $ renderDivs $
     fileAFormReq "Upload (UTF-8) paypal transaction file:"
   (bkFormWidget, bkFormEnctype) <- generateFormPost $ identifyForm "bank" $ renderDivs $
@@ -332,8 +332,8 @@ postUtilitiesR = do
   -- blah <- M.lookup "name"
   mbdrid <- checkDuesRate "default" 0
   drid <- unMaybe mbdrid
-  ((cppuresult, _), _) <- runFormPost $ identifyForm "cppu" (mehForm "meh")
-  ((cpptresult, _), _) <- runFormPost $ identifyForm "cppt" (mehForm "meh")
+  ((cppuresult, _), _) <- runFormPost $ identifyForm "cppu" mehForm 
+  ((cpptresult, _), _) <- runFormPost $ identifyForm "cppt" mehForm
   ((ppresult, ppFormWidget), ppFormEnctype) <- runFormPost $ identifyForm "paypal" paypalForm 
   ((bkresult, ppFormWidget), bkFormEnctype) <- runFormPost $ identifyForm "bank" paypalForm 
   let handlerName = "postUtilitiesR" :: Text
