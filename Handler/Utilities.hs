@@ -24,10 +24,20 @@ paypalForm :: Form FileInfo
 paypalForm = renderDivs $ 
     fileAFormReq "" 
 
+data Meh = Meh 
+  {
+  mehVal :: Text
+  }
+
+mehForm :: Text -> Form Meh
+mehForm txt = renderDivs $ Meh 
+  <$> areq hiddenField "" (Just txt)
+
 getUtilitiesR :: Handler Html
 getUtilitiesR = do
   logid <- requireAuthId
   requireAdmin logid 
+  (mtFormWidget, mtFormEnctype) <- generateFormPost $ identifyForm "ppproc" $ mehForm (T.pack "blah")
   (ppFormWidget, ppFormEnctype) <- generateFormPost $ identifyForm "paypal" $ renderDivs $
     fileAFormReq "Upload (UTF-8) paypal transaction file:"
   (bkFormWidget, bkFormEnctype) <- generateFormPost $ identifyForm "bank" $ renderDivs $
@@ -40,6 +50,9 @@ getUtilitiesR = do
         <form method=post enctype=#{ppFormEnctype}>
           ^{ppFormWidget}
           <input type=submit value="upload">
+        <form method=post> 
+          ^{mtFormWidget}
+          <input type=submit name="paypal" value="create paypal users">
         <form method=post enctype=#{bkFormEnctype}>
           ^{bkFormWidget}
           <input type=submit value="upload">
@@ -208,7 +221,6 @@ bkToTransaction mp = do
   let check = mebbe (M.lookup "Check Number" mp) :: Maybe Int
   Just $ BankTransaction transactionId day description memo amount check
 
-
 -- add bank transaction, creating emails if necessary.
 addBankTransaction :: UserId -> BankTransaction -> Handler (Maybe (Key Bank))
 addBankTransaction creator trans = do 
@@ -313,8 +325,10 @@ postUtilitiesR :: Handler Html
 postUtilitiesR = do
   logid <- requireAuthId
   requireAdmin logid
+  -- blah <- M.lookup "name"
   mbdrid <- checkDuesRate "default" 0
   drid <- unMaybe mbdrid
+  ((cppresult, _), _) <- runFormPost $ identifyForm "ppproc" (mehForm "meh")
   ((ppresult, ppFormWidget), ppFormEnctype) <- runFormPost $ identifyForm "paypal" paypalForm 
   ((bkresult, ppFormWidget), bkFormEnctype) <- runFormPost $ identifyForm "bank" paypalForm 
   let handlerName = "postUtilitiesR" :: Text
@@ -344,7 +358,6 @@ postUtilitiesR = do
             |]
         FormMissing -> 
           case bkresult of
-            FormMissing -> error "form missing??"
             FormFailure meh -> error $ show meh
             FormSuccess fi -> do
               lift $ createDirectoryIfMissing True bankDir
@@ -367,6 +380,15 @@ postUtilitiesR = do
                   <br> we wrote #{show lkeys} transaction records.  
                   <br> records with transaction IDs already in the database are skipped.
                 |]
+            FormMissing -> case cppresult of 
+              FormSuccess meh -> do 
+                defaultLayout $ do [whamlet|
+                  result:
+                  <br> #{ (mehVal meh) }
+                |]
+              FormFailure err -> error $ show err
+              FormMissing -> error "form missing"
+             
            
 
 
