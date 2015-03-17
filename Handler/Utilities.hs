@@ -33,38 +33,6 @@ mehForm :: Form Meh
 mehForm = renderDivs $ Meh 
   <$> areq hiddenField "" (Just (T.pack "a"))
 
-getUtilitiesR :: Handler Html
-getUtilitiesR = do
-  logid <- requireAuthId
-  requireAdmin logid 
-  (cppuFormWidget, cppuFormEnctype) <- generateFormPost $ identifyForm "cppu" mehForm
-  (cpptFormWidget, cpptFormEnctype) <- generateFormPost $ identifyForm "cppt" mehForm
-  (ppFormWidget, ppFormEnctype) <- generateFormPost $ identifyForm "paypal" $ renderDivs $
-    fileAFormReq "Upload (UTF-8) paypal transaction file:"
-  (bkFormWidget, bkFormEnctype) <- generateFormPost $ identifyForm "bank" $ renderDivs $
-    fileAFormReq "Upload (UTF-8) bank transaction file:"
-  let submission = Nothing :: Maybe (FileInfo, Text)
-  defaultLayout $ do
-      aDomId <- newIdent
-      setTitle "admin utilities"
-      [whamlet|
-        <form method=post enctype=#{ppFormEnctype}>
-          ^{ppFormWidget}
-          <input type=submit value="upload">
-        <form method=post> 
-          ^{cppuFormWidget}
-          <input type=submit value="create paypal users">
-        <form method=post> 
-          ^{cpptFormWidget}
-          <input type=submit value="create paypal transactions">
-        <form method=post enctype=#{bkFormEnctype}>
-          ^{bkFormWidget}
-          <input type=submit value="upload">
-        In case of error: convert to UTF8 using vim like so:
-        <br> :set fileencoding=utf8
-        <br> :w <filename>
-      |]
-
 parsePaypal :: FilePath -> IO [(M.Map String String)]
 parsePaypal fp = do
   meh <- parseCSVFromFile fp 
@@ -324,6 +292,37 @@ unMaybe mba =
     Just mba -> return mba
     Nothing -> error "nothing"
 
+getUtilitiesR :: Handler Html
+getUtilitiesR = do
+  logid <- requireAuthId
+  requireAdmin logid 
+  (cppuFormWidget, cppuFormEnctype) <- generateFormPost $ identifyForm "cppu" mehForm
+  (cpptFormWidget, cpptFormEnctype) <- generateFormPost $ identifyForm "cppt" mehForm
+  (ppFormWidget, ppFormEnctype) <- generateFormPost $ identifyForm "paypal" $ renderDivs $
+    fileAFormReq "Upload (UTF-8) paypal transaction file:"
+  (bkFormWidget, bkFormEnctype) <- generateFormPost $ identifyForm "bank" $ renderDivs $
+    fileAFormReq "Upload (UTF-8) bank transaction file:"
+  let submission = Nothing :: Maybe (FileInfo, Text)
+  defaultLayout $ do
+      aDomId <- newIdent
+      setTitle "admin utilities"
+      [whamlet|
+        <form method=post enctype=#{ppFormEnctype}>
+          ^{ppFormWidget}
+          <input type=submit value="upload">
+        <form method=post> 
+          ^{cppuFormWidget}
+          <input type=submit value="create paypal users">
+        <form method=post> 
+          ^{cpptFormWidget}
+          <input type=submit value="create paypal transactions">
+        <form method=post enctype=#{bkFormEnctype}>
+          ^{bkFormWidget}
+          <input type=submit value="upload">
+        In case of error: convert to UTF8 using vim like so:
+        <br> :set fileencoding=utf8
+        <br> :w <filename>
+      |]
 
 postUtilitiesR :: Handler Html
 postUtilitiesR = do
