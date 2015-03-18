@@ -35,6 +35,15 @@ mehForm :: Form Meh
 mehForm = renderDivs $ Meh 
   <$> areq hiddenField "" (Just (T.pack "a"))
 
+data Blah = Blah
+  {
+    chegBockses :: [Int]
+  }
+
+blahForme :: [(Text,Int)] -> Form Blah
+blahForme choisez = renderDivs $ Blah
+  <$> areq (checkboxesFieldList choisez) "yeah" Nothing 
+
 parsePaypal :: FilePath -> IO [(M.Map String String)]
 parsePaypal fp = do
   meh <- parseCSVFromFile fp 
@@ -323,6 +332,8 @@ getUtilitiesR :: Handler Html
 getUtilitiesR = do
   logid <- requireAuthId
   requireAdmin logid 
+  let choices = [("one", 1), ("two", 2), ("three", 3)]
+  (blahWidget, blahenc) <- generateFormPost $ identifyForm "blah" $ blahForme choices
   (cppuFormWidget, cppuFormEnctype) <- generateFormPost $ identifyForm "cppu" mehForm
   (cpptFormWidget, cpptFormEnctype) <- generateFormPost $ identifyForm "cppt" mehForm
   (ppFormWidget, ppFormEnctype) <- generateFormPost $ identifyForm "paypal" $ renderDivs $
@@ -334,6 +345,9 @@ getUtilitiesR = do
       aDomId <- newIdent
       setTitle "admin utilities"
       [whamlet|
+        <form method=post enctype=#{ppFormEnctype}>
+          ^{blahWidget}
+          <input type=submit value="blah">
         <form method=post enctype=#{ppFormEnctype}>
           ^{ppFormWidget}
           <input type=submit value="upload">
@@ -413,23 +427,30 @@ postUtilitiesR = do
             FormMissing -> case cppuresult of 
               FormSuccess meh -> do 
                 restoo <- runDB $ E.select $ E.from $ 
-                  (\paypal -> do
+                  (\(E.LeftOuterJoin paypal email) -> do
+                    E.where_ $ paypal ^. PaypalFromemail E.==. email E.?. EmailId
                     E.where_ $ E.notExists $ 
                       E.from $ \accountemail -> do
-                        E.where_ (paypal ^. PaypalToemail E.==. 
+                        E.where_ (paypal ^. PaypalFromemail E.==. 
                                   accountemail E.?. AccountEmailEmail)
-                    return (paypal ^. PaypalName, paypal ^. PaypalFromemail))
+                    return (paypal ^. PaypalName, paypal ^. PaypalId, email E.?. EmailEmail)) 
                 defaultLayout $ do [whamlet|
                   cppuresult:
                   <table>
                     <tr>
                       <th> ppn
-                      <th> pfn
-                    $forall (E.Value ppn, E.Value pfe) <- restoo
+                      <th> pid
+                      <th> email
+                    $forall (E.Value ppn, E.Value pid, eml) <- restoo
                       <tr>
                         <td> #{ ppn }
-                        <td> #{ show pfe }
-                  |]
+                        <td> #{ show pid }
+                        $case eml 
+                          $of (E.Value (Just email))
+                            <td> #{ email } 
+                          $of (E.Value Nothing)
+                            <td> 
+                 |]
               FormFailure err -> error $ show err
               FormMissing -> case cpptresult of 
                 FormSuccess meh -> do 
