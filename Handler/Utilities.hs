@@ -16,6 +16,8 @@ import Data.Time.Calendar
 import System.Locale
 import Permissions
 import qualified Data.Maybe as MB
+import qualified Database.Esqueleto      as E
+import           Database.Esqueleto      ((^.))
 
 paypalDir = "paypals"
 bankDir = "banks"
@@ -286,6 +288,31 @@ addTransaction creator trans = do
            Nothing
 -}
 
+{-
+
+  create missing users:
+    for emails in paypal transactions that have no existing accounts, 
+    create user records.  Use the Name field for name, etc.  
+
+
+createMissingUsers :: Handler [UserId]
+createMissingUsers = do 
+  -- emails that are in paypal but have no accounts.
+  res <- runDB $ E.select $ E.from $ 
+    (\(E.LeftOuterJoin (E.InnerJoin paypal email) accountemail)  -> do
+      E.where_ accountemail ^. AccountEmailEmail ^.==. email ^. EmailId 
+      E.where_ email ^. EmailId ^.==. paypal ^. PaypalFromemail
+      E.where_ isNothing (accountemail ^. AccountEmailEmail)
+      return ( paypal ^. PaypalName, email ^. EmailEmail ) 
+       
+                res <- runDB $ E.select $ E.from $ 
+                  (\(E.LeftOuterJoin (E.LeftOuterJoin paypal email) accountemail)  -> do
+                    E.where_ $ (paypal ^. PaypalFromemail E.==. email E.?. EmailId) 
+                    E.where_ $ accountemail E.?. AccountEmailEmail E.==. email E.?. EmailId 
+                    E.where_ $ E.isNothing (accountemail E.?. AccountEmailEmail)
+                    return ( paypal ^. PaypalName, email E.?. EmailEmail )) 
+ -}
+
 unMaybe :: Maybe a -> Handler a
 unMaybe mba = 
   case mba of 
@@ -328,7 +355,6 @@ postUtilitiesR :: Handler Html
 postUtilitiesR = do
   logid <- requireAuthId
   requireAdmin logid
-  -- blah <- M.lookup "name"
   mbdrid <- checkDuesRate "default" 0
   drid <- unMaybe mbdrid
   ((cppuresult, _), _) <- runFormPost $ identifyForm "cppu" mehForm 
@@ -386,10 +412,24 @@ postUtilitiesR = do
                 |]
             FormMissing -> case cppuresult of 
               FormSuccess meh -> do 
+                restoo <- runDB $ E.select $ E.from $ 
+                  (\paypal -> do
+                    E.where_ $ E.notExists $ 
+                      E.from $ \accountemail -> do
+                        E.where_ (paypal ^. PaypalToemail E.==. 
+                                  accountemail E.?. AccountEmailEmail)
+                    return (paypal ^. PaypalName, paypal ^. PaypalFromemail))
                 defaultLayout $ do [whamlet|
                   cppuresult:
-                  <br> #{ (mehVal meh) }
-                |]
+                  <table>
+                    <tr>
+                      <th> ppn
+                      <th> pfn
+                    $forall (E.Value ppn, E.Value pfe) <- restoo
+                      <tr>
+                        <td> #{ ppn }
+                        <td> #{ show pfe }
+                  |]
               FormFailure err -> error $ show err
               FormMissing -> case cpptresult of 
                 FormSuccess meh -> do 
@@ -398,8 +438,17 @@ postUtilitiesR = do
                     <br> #{ (mehVal meh) }
                   |]
                 FormFailure err -> error $ show err
-                FormMissing -> error "form missing"
-             
-           
+                FormMissing -> error "form missing"             
 
+{-           
+
+    for emails in paypal transactions that have no existing accounts, 
+    create user records.  Use the Name field for name, etc.  
+
+  select email, name from paypal where email not in (select email from account_email)
+
+  select * from email where id in (select email from account_email);
+
+-}
+ 
 
