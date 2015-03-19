@@ -44,6 +44,15 @@ blahForme :: [(Text,Int)] -> Form Blah
 blahForme choisez = renderDivs $ Blah
   <$> areq (checkboxesFieldList choisez) "yeah" Nothing 
 
+data UserMake = UserMake
+  {
+    paypals :: [PaypalId] 
+  }
+
+userMakeForm :: [(Text,PaypalId)] -> Maybe UserMake -> Form UserMake
+userMakeForm choisez mbum = renderDivs $ UserMake 
+  <$> areq (checkboxesFieldList choisez) "valid users?" (paypals <$> mbum)
+
 parsePaypal :: FilePath -> IO [(M.Map String String)]
 parsePaypal fp = do
   meh <- parseCSVFromFile fp 
@@ -434,8 +443,16 @@ postUtilitiesR = do
                         E.where_ (paypal ^. PaypalFromemail E.==. 
                                   accountemail E.?. AccountEmailEmail)
                     return (paypal ^. PaypalName, paypal ^. PaypalId, email E.?. EmailEmail)) 
+                let chex = (\(E.Value name, E.Value ppid, E.Value email) -> 
+                             (name, ppid)) <$> restoo
+                    ppids = (\(_, E.Value ppid, _) -> 
+                             ppid) <$> restoo
+                (umform, umenc) <- generateFormPost $ userMakeForm chex (Just $ UserMake ppids)
                 defaultLayout $ do [whamlet|
                   cppuresult:
+                  <form method=post enctype=#{ umenc }>
+                    ^{umform}
+                    <input type=submit value=save>
                   <table>
                     <tr>
                       <th> ppn
@@ -462,6 +479,11 @@ postUtilitiesR = do
                 FormMissing -> error "form missing"             
 
 {-           
+    emails
+      that are in paypal transactions
+        that belong to a club
+      that are NOT in account_email
+
 
     for emails in paypal transactions that have no existing accounts, 
     create user records.  Use the Name field for name, etc.  
@@ -470,6 +492,23 @@ postUtilitiesR = do
 
   select * from email where id in (select email from account_email);
 
--}
+                defaultLayout $ do [whamlet|
+                  cppuresult:
+                  <table>
+                    <tr>
+                      <th> ppn
+                      <th> pid
+                      <th> email
+                    $forall (E.Value ppn, E.Value pid, eml) <- restoo
+                      <tr>
+                        <td> #{ ppn }
+                        <td> #{ show pid }
+                        $case eml 
+                          $of (E.Value (Just email))
+                            <td> #{ email } 
+                          $of (E.Value Nothing)
+                            <td> 
+                 |]
+ -}
  
 
