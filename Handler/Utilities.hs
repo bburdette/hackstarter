@@ -40,9 +40,14 @@ data Blah = Blah
     chegBockses :: [Int]
   }
 
-blahForme :: [(Text,Int)] -> Form Blah
-blahForme choisez = renderDivs $ Blah
-  <$> areq (checkboxesFieldList choisez) "yeah" Nothing 
+data ClubForm = ClubForm
+  {
+    club :: ClubId
+  }
+
+pickClubForm :: [(Text, ClubId)] -> Maybe ClubForm -> Form ClubForm
+pickClubForm clubs cf = renderDivs $ ClubForm
+  <$> areq (selectFieldList clubs) "Club" (club <$> cf)
 
 data UserMake = UserMake
   {
@@ -337,13 +342,18 @@ unMaybe mba =
     Just mba -> return mba
     Nothing -> error "nothing"
 
+clubsGet :: Handler [(Text, ClubId)]
+clubsGet = do 
+  clubids <- runDB $ E.select $ E.from $ (\clubs -> do 
+    return ( clubs ^. ClubName, clubs ^. ClubId ))
+  return $ (\(E.Value name, E.Value id) -> (name, id)) <$> clubids
+
 getUtilitiesR :: Handler Html
 getUtilitiesR = do
   logid <- requireAuthId
   requireAdmin logid 
-  let choices = [("one", 1), ("two", 2), ("three", 3)]
-  (blahWidget, blahenc) <- generateFormPost $ identifyForm "blah" $ blahForme choices
-  (cppuFormWidget, cppuFormEnctype) <- generateFormPost $ identifyForm "cppu" mehForm
+  clubchoices <- clubsGet
+  (cppuFormWidget, cppuFormEnctype) <- generateFormPost $ identifyForm "cppu" $ pickClubForm clubchoices Nothing 
   (cpptFormWidget, cpptFormEnctype) <- generateFormPost $ identifyForm "cppt" mehForm
   (ppFormWidget, ppFormEnctype) <- generateFormPost $ identifyForm "paypal" $ renderDivs $
     fileAFormReq "Upload (UTF-8) paypal transaction file:"
@@ -354,9 +364,6 @@ getUtilitiesR = do
       aDomId <- newIdent
       setTitle "admin utilities"
       [whamlet|
-        <form method=post enctype=#{ppFormEnctype}>
-          ^{blahWidget}
-          <input type=submit value="blah">
         <form method=post enctype=#{ppFormEnctype}>
           ^{ppFormWidget}
           <input type=submit value="upload">
@@ -380,7 +387,8 @@ postUtilitiesR = do
   requireAdmin logid
   mbdrid <- checkDuesRate "default" 0
   drid <- unMaybe mbdrid
-  ((cppuresult, _), _) <- runFormPost $ identifyForm "cppu" mehForm 
+  clubchoices <- clubsGet
+  ((cppuresult, _), _) <- runFormPost $ identifyForm "cppu" $ pickClubForm clubchoices Nothing 
   ((cpptresult, _), _) <- runFormPost $ identifyForm "cppt" mehForm
   ((ppresult, ppFormWidget), ppFormEnctype) <- runFormPost $ identifyForm "paypal" paypalForm 
   ((bkresult, ppFormWidget), bkFormEnctype) <- runFormPost $ identifyForm "bank" paypalForm 
@@ -433,41 +441,9 @@ postUtilitiesR = do
                   <br> we wrote #{show lkeys} transaction records.  
                   <br> records with transaction IDs already in the database are skipped.
                 |]
-            FormMissing -> case cppuresult of 
-              FormSuccess meh -> do 
-                restoo <- runDB $ E.select $ E.from $ 
-                  (\(E.LeftOuterJoin paypal email) -> do
-                    E.where_ $ paypal ^. PaypalFromemail E.==. email E.?. EmailId
-                    E.where_ $ E.notExists $ 
-                      E.from $ \accountemail -> do
-                        E.where_ (paypal ^. PaypalFromemail E.==. 
-                                  accountemail E.?. AccountEmailEmail)
-                    return (paypal ^. PaypalName, paypal ^. PaypalId, email E.?. EmailEmail)) 
-                let chex = (\(E.Value name, E.Value ppid, E.Value email) -> 
-                             (name, ppid)) <$> restoo
-                    ppids = (\(_, E.Value ppid, _) -> 
-                             ppid) <$> restoo
-                (umform, umenc) <- generateFormPost $ userMakeForm chex (Just $ UserMake ppids)
-                defaultLayout $ do [whamlet|
-                  cppuresult:
-                  <form method=post enctype=#{ umenc }>
-                    ^{umform}
-                    <input type=submit value=save>
-                  <table>
-                    <tr>
-                      <th> ppn
-                      <th> pid
-                      <th> email
-                    $forall (E.Value ppn, E.Value pid, eml) <- restoo
-                      <tr>
-                        <td> #{ ppn }
-                        <td> #{ show pid }
-                        $case eml 
-                          $of (E.Value (Just email))
-                            <td> #{ email } 
-                          $of (E.Value Nothing)
-                            <td> 
-                 |]
+            FormMissing -> case cppuresult of
+              FormSuccess pcf -> do 
+                redirect $ CreatePaypalMembersR (club pcf)
               FormFailure err -> error $ show err
               FormMissing -> case cpptresult of 
                 FormSuccess meh -> do 
