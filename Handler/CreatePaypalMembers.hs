@@ -3,7 +3,8 @@ module Handler.CreatePaypalMembers where
 import Import
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
-
+import Data.Maybe
+import Data.Text as T
 {-
 
   show (name, email) pairs
@@ -18,7 +19,6 @@ import           Database.Esqueleto      ((^.))
       transaction, but that's a pain.  want to do it with just the paypalinternal. 
     This expresses the idea that money is given to a club.  
     One can only have transactions from account to account within a club.  
-  
 
 -}
 
@@ -31,41 +31,9 @@ userMakeForm :: [(Text,PaypalId)] -> Maybe UserMake -> Form UserMake
 userMakeForm choisez mbum = renderDivs $ UserMake 
   <$> areq (checkboxesFieldList choisez) "valid users?" (paypals <$> mbum)
 
-{-
-  restoo <- runDB $ E.select $ E.from $ 
-    (\(E.LeftOuterJoin paypal email) -> do
-      E.where_ $ paypal ^. PaypalFromemail E.==. email E.?. EmailId
-      E.where_ $ E.notExists $ 
-        E.from $ \accountemail -> do
-          E.where_ (paypal ^. PaypalFromemail E.==. 
-                    accountemail E.?. AccountEmailEmail)
-      E.where_ $ E.in_ (paypal E.^. PaypalToemail) $ 
-        E.select $ E.from $ \(E.InnerJoin clubaccount aeml) -> do 
-          E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
-          E.where_ $ clubaccount ^. ClubAccountAccount E.==. aeml ^. AccountEmailAccount
-          return (aeml ^. AccountEmailEmail)
-      return (paypal ^. PaypalName, paypal ^. PaypalId, email E.?. EmailEmail)) 
- 
-  restoo <- runDB $ E.select $ E.from $ 
-    (\(E.LeftOuterJoin paypal email) -> do
-      E.where_ $ paypal ^. PaypalFromemail E.==. email E.?. EmailId
-      E.where_ $ E.notExists $ 
-        E.from $ \accountemail -> do
-          E.where_ (paypal ^. PaypalFromemail E.==. 
-                    accountemail E.?. AccountEmailEmail)
-      E.where_ $ E.exists $ 
-        E.from $ \(E.InnerJoin clubaccount aeml) -> do 
-          E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
-          E.where_ $ clubaccount ^. ClubAccountAccount E.==. aeml ^. AccountEmailAccount
-          E.where_ (paypal ^. PaypalToemail E.==. 
-                    aeml ^. AccountEmailEmail)
-      return (paypal ^. PaypalName, paypal ^. PaypalId, email E.?. EmailEmail)) 
- -}
 getCreatePaypalMembersR :: ClubId -> Handler Html
---getCreatePaypalMembersR cid = error "blah"
-
 getCreatePaypalMembersR cid = do  
-  restoo <- runDB $ E.select $ E.from $ 
+  restoo <- runDB $ E.selectDistinct $ E.from $ 
     (\(E.LeftOuterJoin paypal email) -> do
       E.where_ $ paypal ^. PaypalFromemail E.==. email E.?. EmailId
       E.where_ $ E.notExists $ 
@@ -80,10 +48,14 @@ getCreatePaypalMembersR cid = do
             E.subList_select $ E.from $ \clubaccount -> do
               E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
               return $ E.just $ clubaccount ^. ClubAccountAccount
-      return (paypal ^. PaypalName, paypal ^. PaypalId, email E.?. EmailEmail)) 
-  let chex = (\(E.Value name, E.Value ppid, E.Value email) -> 
-               (name, ppid)) <$> restoo
-      ppids = (\(_, E.Value ppid, _) -> 
+      E.groupBy (email E.?. EmailId)
+      E.orderBy [E.asc $ paypal ^. PaypalName]
+      return (email E.?. EmailId, email E.?. EmailEmail, paypal ^. PaypalName, E.min_ (paypal ^. PaypalId))) 
+  let chex = catMaybes $ (\(E.Value emlid, E.Value email, E.Value name, E.Value mbppid) -> 
+               case mbppid of 
+                 Just ppid -> Just (T.append name (T.append " " (fromMaybe "" email)), ppid)
+                 Nothing -> Nothing) <$> restoo
+      ppids = catMaybes $ (\(_, _, _, E.Value ppid) -> 
                ppid) <$> restoo
   (umform, umenc) <- generateFormPost $ userMakeForm chex (Just $ UserMake ppids)
   defaultLayout $ do [whamlet|
@@ -91,40 +63,7 @@ getCreatePaypalMembersR cid = do
     <form method=post enctype=#{ umenc }>
       ^{umform}
       <input type=submit value=save>
-    <table>
-      <tr>
-        <th> ppn
-        <th> pid
-        <th> email
-      $forall (E.Value ppn, E.Value pid, eml) <- restoo
-        <tr>
-          <td> #{ ppn }
-          <td> #{ show pid }
-          $case eml 
-            $of (E.Value (Just email))
-              <td> #{ email } 
-            $of (E.Value Nothing)
-              <td> 
-   |]
-
-{-
-
-select email.email from account_email, club_account, email where club_account.club == 1 and club_account.account == account_email.account and email.id == account_email.email;
-
--}
-
-
-{-
-FormFailure err -> error $ show err
-FormMissing -> case cpptresult of 
-  FormSuccess meh -> do 
-    defaultLayout $ do [whamlet|
-      cpptresult:
-      <br> #{ (mehVal meh) }
     |]
-  FormFailure err -> error $ show err
-  FormMissing -> error "form missing"             
--}
 
 postCreatePaypalMembersR :: ClubId -> Handler Html
 postCreatePaypalMembersR = error "Not yet implemented: postCreatePaypalMembersR"
