@@ -2,4 +2,4 @@
 <ul> 
   $forall Entity duesRateId duesRate <- theRates
     <li> 
-      #{duesRateName duesRate} #{duesRateAmount duesRate}
+      #{duesRateName duesRate} #{ show (duesRateAmount duesRate) }

@@ -9,7 +9,7 @@
     <tr> 
       <td> <a href=@{UserR usrId}> #{usrident} 
       <td> #{usrName} 
-      <td> #{drname} #{dramt}
+      <td> #{drname} #{show dramt}
       <td> 
         <a href=@{UserTransactionsR usrId}> transactions
 

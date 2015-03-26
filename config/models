@@ -28,7 +28,7 @@ Link
     UniqueLink fromproj toproj
 DuesRate
     name Text
-    amount Int
+    amount Centi
     UniqueDuesRate name
 Paypal
     transactionid Text

@@ -4,6 +4,7 @@ import Import
 import Data.Time.Clock
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
+import Data.Fixed 
 
 getPermissionUsers :: PermissionId -> 
   Handler [(E.Value (KeyBackend E.SqlBackend User), E.Value Text)]
@@ -112,7 +113,7 @@ checkPermission permname userAddable = do
   
 -- check if there's a dues rate with the indicated name.
 -- if not, create one with that name and the passed in amount.
-checkDuesRate :: Text -> Int -> Handler (Maybe DuesRateId)
+checkDuesRate :: Text -> Centi -> Handler (Maybe DuesRateId)
 checkDuesRate drname amount = do 
   drent <- runDB $ getBy $ UniqueDuesRate drname
   case drent of 
