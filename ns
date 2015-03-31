@@ -1,1 +1,2 @@
-nix-shell -I nixpkgs=/home/bburdette/nixpkgs
+# nix-shell -I nixpkgs=/home/bburdette/nixpkgs_14.12/
+nix-shell -I nixpkgs=/home/bburdette/nixpkgs_sqlite_hackstarter

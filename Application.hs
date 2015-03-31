@@ -25,7 +25,7 @@ import Data.Default (def)
 import Yesod.Core.Types (loggerSet, Logger (Logger))
 
 -- BTB for sqlite foreign key activation. 
-import ForkeyOpen
+-- import ForkeyOpen
 
 import Permissions
 
@@ -98,11 +98,11 @@ makeFoundation :: AppConfig DefaultEnv Extra -> IO App
 makeFoundation conf = do
     manager <- newManager
     s <- staticSite
-    dbconf <- withYamlEnvironment "config/sqlite.yml" (appEnv conf)
+    dbconf <- withYamlEnvironment "config/postgresql.yml" (appEnv conf)
               Database.Persist.loadConfig >>=
               Database.Persist.applyEnv
-    p <- forKeyCreatePoolConfig (dbconf :: Settings.PersistConf)
-    -- p <- Database.Persist.createPoolConfig (dbconf :: Settings.PersistConf)
+    -- p <- forKeyCreatePoolConfig (dbconf :: Settings.PersistConf)
+    p <- Database.Persist.createPoolConfig (dbconf :: Settings.PersistConf)
 
     loggerSet' <- newStdoutLoggerSet defaultBufSize
     (getter, _) <- clockDateCacher

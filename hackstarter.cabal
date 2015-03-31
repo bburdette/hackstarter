@@ -17,7 +17,6 @@ library
                      DuesRateForm
                      PermissionForm 
                      Foundation
-                     ForkeyOpen
                      Import
                      Model
                      UserForm
@@ -78,6 +77,7 @@ library
                 EmptyDataDecls
                 NoMonomorphismRestriction
                 DeriveDataTypeable
+                ViewPatterns
 
     build-depends: base                          
                  , yesod                        
@@ -88,7 +88,7 @@ library
                  , bytestring            
                  , text                   
                  , persistent            
-                 , persistent-sqlite    
+                 , persistent-postgresql    
                  , persistent-template 
                  , template-haskell
                  , shakespeare        
@@ -136,7 +136,7 @@ test-suite test
                  , yesod-core
                  , yesod
                  , persistent
-                 , persistent-sqlite
+                 , persistent-postgresql
                  , resourcet
                  , monad-logger
                  , transformers
