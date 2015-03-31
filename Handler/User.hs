@@ -19,8 +19,8 @@ getUserPermissions :: UserId ->
 getUserPermissions uid = do 
   perms <- runDB $ E.select 
     $ E.from $ \(E.InnerJoin userpermission permission) -> do 
-      E.where_ $ userpermission ^. UserPermissionUser E.==. (E.val uid)
-      E.where_ $ userpermission ^. UserPermissionPermission E.==. permission ^. PermissionId
+      E.on $ (userpermission ^. UserPermissionUser E.==. (E.val uid))
+        E.&&. (userpermission ^. UserPermissionPermission E.==. permission ^. PermissionId)
       E.orderBy $ [E.asc ( permission ^. PermissionName )]
       return 
         ( permission ^. PermissionId,
@@ -32,9 +32,9 @@ getUserAddPermissions :: UserId -> Handler [(E.Value (KeyBackend E.SqlBackend Pe
 getUserAddPermissions uid = do 
   perms <- runDB $ E.select 
     $ E.from $ \(E.InnerJoin userpermission permission) -> do 
-      E.where_ $ userpermission ^. UserPermissionUser E.==. (E.val uid)
-      E.where_ $ permission ^. PermissionUserAddable E.==. (E.val True)
-      E.on $ userpermission ^. UserPermissionPermission E.==. permission ^. PermissionId
+      E.on $ (userpermission ^. UserPermissionUser E.==. (E.val uid))
+        E.&&. (permission ^. PermissionUserAddable E.==. (E.val True))
+        E.&&. (userpermission ^. UserPermissionPermission E.==. permission ^. PermissionId)
       E.orderBy $ [E.asc ( permission ^. PermissionName )]
       return 
         ( permission ^. PermissionId,
@@ -73,8 +73,8 @@ addPermForm permlist = renderDivs $ PermId
 getUserAccounts uid = do
   blah <- runDB $ E.select $ E.from $ 
     \(E.InnerJoin useraccount account) -> do
-      E.where_ $ useraccount ^. UserAccountUser E.==. E.val uid
-      E.where_ $ useraccount ^. UserAccountAccount E.==. account ^. AccountId
+      E.on ((useraccount ^. UserAccountUser E.==. E.val uid) E.&&.
+            (useraccount ^. UserAccountAccount E.==. account ^. AccountId))
       return (useraccount ^. UserAccountId,
               account ^. AccountId,
               account ^. AccountName)
@@ -83,9 +83,9 @@ getUserAccounts uid = do
 getUserAccountEmails uid = do
   accountemails <- runDB $ E.select $ E.from $ 
     \(E.InnerJoin (E.InnerJoin useraccount accountemail) email) -> do
-      E.where_ $ useraccount ^. UserAccountUser E.==. (E.val uid)
-      E.where_ $ useraccount ^. UserAccountAccount E.==. accountemail ^. AccountEmailAccount
-      E.where_ $ accountemail ^. AccountEmailEmail  E.==. email ^. EmailId
+      E.on (accountemail ^. AccountEmailEmail  E.==. email ^. EmailId)
+      E.on $ (useraccount ^. UserAccountUser E.==. (E.val uid))
+        E.&&. (useraccount ^. UserAccountAccount E.==. accountemail ^. AccountEmailAccount)
       return (useraccount ^. UserAccountAccount, 
               accountemail ^. AccountEmailId,
               email ^. EmailId, 
