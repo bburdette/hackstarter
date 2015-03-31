@@ -37,22 +37,22 @@ getClubR cid = do
       (ewidge,eenc) <- generateFormPost $ identifyForm "email" $ emailForm Nothing
       -- read club accounts, account emails.
       accounts <- runDB $ E.select $ E.from $ \(E.InnerJoin clubaccount account) -> do 
-        E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
-        E.where_ $ clubaccount ^. ClubAccountAccount E.==. account ^. AccountId
+        E.on ((clubaccount ^. ClubAccountClub E.==. (E.val cid)) E.&&.
+              (clubaccount ^. ClubAccountAccount E.==. account ^. AccountId))
         return (clubaccount ^. ClubAccountId, 
                 account ^. AccountId,
                 account ^. AccountName)
       emails <- runDB $ E.select $ E.from $ \(E.InnerJoin clubemail email) -> do 
-        E.where_ $ clubemail ^. ClubEmailClub E.==. (E.val cid)
-        E.where_ $ clubemail ^. ClubEmailEmail E.==. email ^. EmailId
+        E.on ((clubemail ^. ClubEmailClub E.==. (E.val cid)) E.&&.
+              (clubemail ^. ClubEmailEmail E.==. email ^. EmailId))
         return (clubemail ^. ClubEmailId, 
                 email ^. EmailId,
                 email ^. EmailEmail)
       accountemails <- runDB $ E.select $ E.from $ 
         \(E.InnerJoin (E.InnerJoin clubaccount accountemail) email) -> do
-          E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
-          E.where_ $ clubaccount ^. ClubAccountAccount E.==. accountemail ^. AccountEmailAccount
-          E.where_ $ accountemail ^. AccountEmailEmail  E.==. email ^. EmailId
+          E.on $ accountemail ^. AccountEmailEmail  E.==. email ^. EmailId
+          E.on ((clubaccount ^. ClubAccountClub E.==. (E.val cid)) E.&&.
+                (clubaccount ^. ClubAccountAccount E.==. accountemail ^. AccountEmailAccount))
           return (clubaccount ^. ClubAccountAccount, 
                   accountemail ^. AccountEmailId,
                   email ^. EmailId, 
@@ -129,14 +129,14 @@ postClubR cid = do
       ((a_res, _),_) <- runFormPost $ identifyForm "account" $ accountForm Nothing
       ((e_res, _),_) <- runFormPost $ identifyForm "email" $ emailForm Nothing
       accounts <- runDB $ E.select $ E.from $ \(E.InnerJoin clubaccount account) -> do 
-        E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
-        E.where_ $ clubaccount ^. ClubAccountAccount E.==. account ^. AccountId
+        E.on ((clubaccount ^. ClubAccountClub E.==. (E.val cid)) E.&&.
+              (clubaccount ^. ClubAccountAccount E.==. account ^. AccountId))
         return (clubaccount ^. ClubAccountId, 
                 account ^. AccountId,
                 account ^. AccountName)
       emails <- runDB $ E.select $ E.from $ \(E.InnerJoin clubemail email) -> do 
-        E.where_ $ clubemail ^. ClubEmailClub E.==. (E.val cid)
-        E.where_ $ clubemail ^. ClubEmailEmail E.==. email ^. EmailId
+        E.on ((clubemail ^. ClubEmailClub E.==. (E.val cid)) E.&&.
+              (clubemail ^. ClubEmailEmail E.==. email ^. EmailId))
         return (clubemail ^. ClubEmailId, 
                 email ^. EmailId,
                 email ^. EmailEmail)

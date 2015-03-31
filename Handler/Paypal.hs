@@ -21,9 +21,9 @@ getPaypalR = do
    in do
     ledges <- runDB $ E.select 
       $ E.from $ \(E.InnerJoin (E.LeftOuterJoin (E.LeftOuterJoin paypal email) email2) usercreator) -> do 
-        E.where_ $ usercreator ^. UserId E.==. paypal ^. PaypalCreator
-        E.where_ $ (paypal ^. PaypalFromemail E.==. email E.?. EmailId) 
-        E.where_ $ (paypal ^. PaypalToemail E.==. email2 E.?. EmailId) 
+        E.on $ usercreator ^. UserId E.==. paypal ^. PaypalCreator
+        E.on (paypal ^. PaypalToemail E.==. email2 E.?. EmailId)
+        E.on (paypal ^. PaypalFromemail E.==. email E.?. EmailId)
         E.orderBy $ [E.asc ( paypal ^. PaypalDate)]
         return 
           ( paypal ^. PaypalDate,
