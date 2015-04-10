@@ -6,6 +6,6 @@
 
 <!-- input name="whatevs" type=button value="meh" onClick="alert('afa')"-->
 
-<a href=@{AddDuesRateR}> Add a rate
+<a href=@{AddDuesRateR cid}> Add a rate
 <br>
 <a href=@{HomeR}>main page

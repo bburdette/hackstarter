@@ -3,9 +3,9 @@ module Handler.DuesRates where
 import Import
 import Permissions
 
-getDuesRatesR :: Handler Html
-getDuesRatesR = do 
-  theRates <- runDB $ selectList [] []
+getDuesRatesR :: ClubId -> Handler Html
+getDuesRatesR cid = do 
+  theRates <- runDB $ selectList [DuesRateClub ==. cid] []
   id <- requireAuthId
   admin <- isAdmin id
   case admin of 
@@ -18,5 +18,5 @@ getDuesRatesR = do
         setTitle "Dues Rates"
         $(widgetFile "duesrates_ro")
 
-postDuesRatesR :: Handler Html
-postDuesRatesR = error "Not yet implemented: postDuesRatesR"
+postDuesRatesR :: ClubId -> Handler Html
+postDuesRatesR cid = error "Not yet implemented: postDuesRatesR"

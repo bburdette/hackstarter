@@ -113,16 +113,28 @@ checkPermission permname userAddable = do
   
 -- check if there's a dues rate with the indicated name.
 -- if not, create one with that name and the passed in amount.
-checkDuesRate :: Text -> Centi -> Handler (Maybe DuesRateId)
-checkDuesRate drname amount = do 
+checkDuesRate :: ClubId -> Text -> Centi -> Handler (Maybe DuesRateId)
+checkDuesRate cid drname amount = do 
   drent <- runDB $ getBy $ UniqueDuesRate drname
   case drent of 
     Nothing -> 
       do 
-        drId <- runDB $ insert $ DuesRate drname amount
+        drId <- runDB $ insert $ DuesRate drname amount cid
         return $ Just drId
     Just (Entity drId dr) -> 
       return $ Just drId
+
+-- when there's no admin account, we'll need a default club to put that
+-- admin account in.
+checkDefaultClub :: Handler ClubId
+checkDefaultClub = do 
+  firstclub <- runDB $ selectFirst [] [(Asc ClubId)]
+  case firstclub of 
+    Just (Entity cid club) -> return cid 
+    Nothing -> do
+      cid <- runDB $ insert $ Club "default" 
+      return cid
+      
 
 -- make sure there's an admin permission, and an admin user.
 checkAdmin :: Handler (Maybe UserId)
@@ -134,7 +146,8 @@ checkAdmin = do
       case admin of 
         Nothing -> do 
           -- add an admin user.
-          mbdrid <- checkDuesRate "default" 0
+          defcid <- checkDefaultClub
+          mbdrid <- checkDuesRate defcid "default" 0
           case mbdrid of 
             Just drid -> do 
               curtime <- lift getCurrentTime

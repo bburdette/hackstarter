@@ -5,8 +5,6 @@
   <li> Look at the 
     <a href=@{UsersR}> users 
   <li> Look at the 
-    <a href=@{DuesRatesR}> dues rates
-  <li> Look at the 
     <a href=@{ProjectsR}> projects 
   <li> Look at the 
     <a href=@{PermissionsR}> permissions 

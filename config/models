@@ -29,6 +29,7 @@ Link
 DuesRate
     name Text
     amount Centi
+    club ClubId
     UniqueDuesRate name
 Paypal
     transactionid Text

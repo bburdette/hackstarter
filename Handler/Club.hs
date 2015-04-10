@@ -68,6 +68,7 @@ getClubR cid = do
       defaultLayout $ do
         [whamlet|
           <h4> Club Maintenance
+          <a href=@{DuesRatesR cid}> dues rates
           <form method=post enctype=#{enc}> 
             ^{widge}
             <input type=submit value=ok>

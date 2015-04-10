@@ -48,8 +48,9 @@ $newline never
 
 
 
-duesRateForm :: Maybe DuesRate -> Form DuesRate
-duesRateForm dr = renderDivs $ DuesRate
+duesRateForm :: ClubId -> Maybe DuesRate -> Form DuesRate
+duesRateForm cid dr = renderDivs $ DuesRate
  <$> areq textField "Dues rate name" (duesRateName <$> dr) 
  <*> areq centiField "Dues rate amount" (duesRateAmount <$> dr)
+ <*> areq hiddenField "" (Just cid)
 

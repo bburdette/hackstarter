@@ -21,6 +21,7 @@ library
                      Model
                      UserForm
                      Settings
+                     Util
                      Settings.StaticFiles
                      Settings.Development
                      Handler.Home

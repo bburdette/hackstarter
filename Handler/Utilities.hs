@@ -18,6 +18,7 @@ import Permissions
 import qualified Data.Maybe as MB
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
+import Util
 
 paypalDir = "paypals"
 bankDir = "banks"
@@ -336,12 +337,6 @@ createMissingUsers = do
                     return ( paypal ^. PaypalName, email E.?. EmailEmail )) 
  -}
 
-unMaybe :: Maybe a -> Handler a
-unMaybe mba = 
-  case mba of 
-    Just mba -> return mba
-    Nothing -> error "nothing"
-
 clubsGet :: Handler [(Text, ClubId)]
 clubsGet = do 
   clubids <- runDB $ E.select $ E.from $ (\clubs -> do 
@@ -385,8 +380,6 @@ postUtilitiesR :: Handler Html
 postUtilitiesR = do
   logid <- requireAuthId
   requireAdmin logid
-  mbdrid <- checkDuesRate "default" 0
-  drid <- unMaybe mbdrid
   clubchoices <- clubsGet
   ((cppuresult, _), _) <- runFormPost $ identifyForm "cppu" $ pickClubForm clubchoices Nothing 
   ((cpptresult, _), _) <- runFormPost $ identifyForm "cppt" mehForm
