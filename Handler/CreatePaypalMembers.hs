@@ -33,30 +33,30 @@ userMakeForm choisez mbum = renderDivs $ UserMake
 
 getCreatePaypalMembersR :: ClubId -> Handler Html
 getCreatePaypalMembersR cid = do  
-  restoo <- runDB $ E.selectDistinct $ E.from $ 
-    (\(E.LeftOuterJoin paypal email) -> do
-      E.where_ $ paypal ^. PaypalFromemail E.==. email E.?. EmailId
-      E.where_ $ E.notExists $ 
-        E.from $ \accountemail -> do
-          E.where_ (paypal ^. PaypalFromemail E.==. 
-                    accountemail E.?. AccountEmailEmail)
-      E.where_ $ E.exists $ 
-        E.from $ \aeml -> do 
-          E.where_ (paypal ^. PaypalToemail E.==. 
-                    aeml E.?. AccountEmailEmail)
-          E.where_ $ E.in_ (aeml E.?. AccountEmailAccount) $
-            E.subList_select $ E.from $ \clubaccount -> do
-              E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
-              return $ E.just $ clubaccount ^. ClubAccountAccount
-      E.groupBy (email E.?. EmailId)
+  membs <- runDB $ E.select $ E.from $ 
+    (\(E.InnerJoin paypal email) -> do
+      E.on $ (paypal ^. PaypalFromemail E.==. email E.?. EmailId)
+        E.&&. (E.notExists $ 
+                E.from $ \accountemail -> do
+                  E.where_ (paypal ^. PaypalFromemail E.==. 
+                            accountemail E.?. AccountEmailEmail))
+        E.&&. (E.exists $ 
+                E.from $ \aeml -> do 
+                  E.where_ (paypal ^. PaypalToemail E.==. 
+                            aeml E.?. AccountEmailEmail)
+                  E.where_ $ E.in_ (aeml E.?. AccountEmailAccount) $
+                    E.subList_select $ E.from $ \clubaccount -> do
+                      E.where_ $ clubaccount ^. ClubAccountClub E.==. (E.val cid)
+                      return $ E.just $ clubaccount ^. ClubAccountAccount)
+      E.groupBy (email E.?. EmailId, paypal ^. PaypalName)
       E.orderBy [E.asc $ paypal ^. PaypalName]
       return (email E.?. EmailId, email E.?. EmailEmail, paypal ^. PaypalName, E.min_ (paypal ^. PaypalId))) 
   let chex = catMaybes $ (\(E.Value emlid, E.Value email, E.Value name, E.Value mbppid) -> 
                case mbppid of 
                  Just ppid -> Just (T.append name (T.append " " (fromMaybe "" email)), ppid)
-                 Nothing -> Nothing) <$> restoo
+                 Nothing -> Nothing) <$> membs
       ppids = catMaybes $ (\(_, _, _, E.Value ppid) -> 
-               ppid) <$> restoo
+               ppid) <$> membs
   (umform, umenc) <- generateFormPost $ userMakeForm chex (Just $ UserMake ppids)
   defaultLayout $ do [whamlet|
     cppuresult:
