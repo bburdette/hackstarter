@@ -31,8 +31,8 @@ userMakeForm :: [(Text,PaypalId)] -> Maybe UserMake -> Form UserMake
 userMakeForm choisez mbum = renderDivs $ UserMake 
   <$> areq (checkboxesFieldList choisez) "valid users?" (paypals <$> mbum)
 
-getCreatePaypalMembersR :: ClubId -> Handler Html
-getCreatePaypalMembersR cid = do  
+makeChex :: ClubId -> Handler ([(Text, PaypalId)], [PaypalId])
+makeChex cid = do  
   membs <- runDB $ E.select $ E.from $ 
     (\(E.InnerJoin paypal email) -> do
       E.on $ (paypal ^. PaypalFromemail E.==. email E.?. EmailId)
@@ -57,6 +57,12 @@ getCreatePaypalMembersR cid = do
                  Nothing -> Nothing) <$> membs
       ppids = catMaybes $ (\(_, _, _, E.Value ppid) -> 
                ppid) <$> membs
+  return (chex, ppids)
+
+
+getCreatePaypalMembersR :: ClubId -> Handler Html
+getCreatePaypalMembersR cid = do  
+  (chex,ppids) <- makeChex cid
   (umform, umenc) <- generateFormPost $ userMakeForm chex (Just $ UserMake ppids)
   defaultLayout $ do [whamlet|
     cppuresult:
@@ -66,4 +72,13 @@ getCreatePaypalMembersR cid = do
     |]
 
 postCreatePaypalMembersR :: ClubId -> Handler Html
-postCreatePaypalMembersR = error "Not yet implemented: postCreatePaypalMembersR"
+postCreatePaypalMembersR cid = do 
+  (chex,_) <- makeChex cid
+  ((res,_),_) <- runFormPost $ userMakeForm chex Nothing
+  case res of 
+    FormFailure meh -> error $ show meh
+    FormMissing -> error "form missing"
+    FormSuccess umk -> do 
+      defaultLayout $ do [whamlet|
+        #{ show (paypals umk) }
+        |]  
