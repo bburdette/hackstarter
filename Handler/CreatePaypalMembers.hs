@@ -130,6 +130,10 @@ makeUser drs cid pid ct = do
   eml <- unMaybe mbeml
   mbdrid <- findPpDuesRate drs cid ppfe
   drid <- unMaybe mbdrid
-  runDB $ insert $ User (emailEmail eml) (paypalName pp) Nothing drid (utctDay ct)
+  uid <- runDB $ insert $ User (emailEmail eml) (paypalName pp) Nothing drid (utctDay ct)
+  acctid <- runDB $ insert $ Account "defualt"
+  useracct <-runDB $ insert $ UserAccount uid acctid
+  accteml <- runDB $ insert $ AccountEmail acctid ppfe 
+  return uid
   
 
