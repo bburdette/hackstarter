@@ -4,7 +4,12 @@ import Import
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 import Data.Maybe
-import Data.Text as T
+import qualified Data.Text as T
+import Data.Fixed
+import Data.Time.Clock
+import Util
+import Control.Monad
+import Data.Maybe
 {-
 
   show (name, email) pairs
@@ -59,7 +64,6 @@ makeChex cid = do
                ppid) <$> membs
   return (chex, ppids)
 
-
 getCreatePaypalMembersR :: ClubId -> Handler Html
 getCreatePaypalMembersR cid = do  
   (chex,ppids) <- makeChex cid
@@ -78,7 +82,54 @@ postCreatePaypalMembersR cid = do
   case res of 
     FormFailure meh -> error $ show meh
     FormMissing -> error "form missing"
-    FormSuccess umk -> do 
+    FormSuccess umk -> do
+      users <- makeUsers cid (paypals umk) 
       defaultLayout $ do [whamlet|
-        #{ show (paypals umk) }
+        created users:
+        <br> 
+          #{ show users }
+        <br> from :
+        <br>
+          #{ show (paypals umk) }
         |]  
+
+findPpDuesRate :: [Entity DuesRate] -> ClubId -> EmailId -> Handler (Maybe DuesRateId)
+findPpDuesRate drs cid eid = do 
+  -- get all paypal transaction amounts from eid to club.
+  ppts <- runDB $ E.select $ E.from $ \paypal -> do
+    E.where_ $ (paypal ^. PaypalFromemail E.==. E.just (E.val eid)) 
+    E.where_ $ E.in_ (paypal ^. PaypalToemail) (E.subList_select $ E.from (\clubmail -> do 
+        E.where_ $ clubmail ^. ClubEmailClub E.==. E.val cid
+        return $ E.just (clubmail ^. ClubEmailEmail)))
+    E.orderBy [E.desc (paypal ^. PaypalDate)]
+    return $ paypal ^. PaypalAmountGross
+  -- dues rate is the latest paypal payment that is in the rates list.
+  let valids = fmap (findRate drs) (fmap (\(E.Value a) -> a) ppts)
+  return $ join (listToMaybe (fmap (fmap entityKey) valids))
+
+findRate :: [Entity DuesRate] -> Centi -> Maybe (Entity DuesRate)
+findRate rates amt = 
+  let matches = filter (\(Entity id rt) -> (duesRateAmount rt) == amt) rates in
+  listToMaybe matches
+
+makeUsers :: ClubId -> [PaypalId] -> Handler [UserId]
+makeUsers cid ppids = do 
+  -- for each paypal transaction create a user record, 
+  -- and a user account.
+  -- user recs require a dues rate, but is that really necessary?
+  duesRates <- runDB $ selectList [DuesRateClub ==. cid] []
+  curtime <- lift getCurrentTime
+  (mapM (\pid -> makeUser duesRates cid pid curtime) ppids)
+
+makeUser :: [Entity DuesRate] -> ClubId -> PaypalId -> UTCTime -> Handler UserId 
+makeUser drs cid pid ct = do 
+  mbpp <- runDB $ get pid
+  pp <- unMaybe mbpp
+  ppfe <- unMaybe (paypalFromemail pp)
+  mbeml <- runDB $ get ppfe 
+  eml <- unMaybe mbeml
+  mbdrid <- findPpDuesRate drs cid ppfe
+  drid <- unMaybe mbdrid
+  runDB $ insert $ User (emailEmail eml) (paypalName pp) Nothing drid (utctDay ct)
+  
+
