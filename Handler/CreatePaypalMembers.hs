@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Handler.CreatePaypalMembers where
 
 import Import
@@ -10,6 +12,7 @@ import Data.Time.Clock
 import Util
 import Control.Monad
 import Data.Maybe
+
 {-
 
   show (name, email) pairs
@@ -124,12 +127,12 @@ makeUsers cid ppids = do
 makeUser :: [Entity DuesRate] -> ClubId -> PaypalId -> UTCTime -> Handler UserId 
 makeUser drs cid pid ct = do 
   mbpp <- runDB $ get pid
-  pp <- unMaybe mbpp
-  ppfe <- unMaybe (paypalFromemail pp)
+  pp <- unMaybeMsg mbpp "no paypal record!"
+  ppfe <- unMaybeMsg (paypalFromemail pp) "no pp email"
   mbeml <- runDB $ get ppfe 
-  eml <- unMaybe mbeml
+  eml <- unMaybeMsg mbeml "no email record!"
   mbdrid <- findPpDuesRate drs cid ppfe
-  drid <- unMaybe mbdrid
+  drid <- unMaybeMsg mbdrid "no dues rate!"
   uid <- runDB $ insert $ User (emailEmail eml) (paypalName pp) Nothing drid (utctDay ct)
   acctid <- runDB $ insert $ Account "defualt"
   useracct <-runDB $ insert $ UserAccount uid acctid
