@@ -96,6 +96,18 @@ postCreatePaypalMembersR cid = do
           #{ show (paypals umk) }
         |]  
 
+findPpDuesRateDB :: [Entity DuesRate] -> ClubId -> EmailId -> Handler [Centi]
+findPpDuesRateDB drs cid eid = do 
+  -- get all paypal transaction amounts from eid to club.
+  ppts <- runDB $ E.select $ E.from $ \paypal -> do
+    E.where_ $ (paypal ^. PaypalFromemail E.==. E.just (E.val eid)) 
+    E.where_ $ E.in_ (paypal ^. PaypalToemail) (E.subList_select $ E.from (\clubmail -> do 
+        E.where_ $ clubmail ^. ClubEmailClub E.==. E.val cid
+        return $ E.just (clubmail ^. ClubEmailEmail)))
+    E.orderBy [E.desc (paypal ^. PaypalDate)]
+    return $ paypal ^. PaypalAmountGross
+  return (fmap (\(E.Value a) -> a) ppts)
+
 findPpDuesRate :: [Entity DuesRate] -> ClubId -> EmailId -> Handler (Maybe DuesRateId)
 findPpDuesRate drs cid eid = do 
   -- get all paypal transaction amounts from eid to club.
@@ -108,7 +120,7 @@ findPpDuesRate drs cid eid = do
     return $ paypal ^. PaypalAmountGross
   -- dues rate is the latest paypal payment that is in the rates list.
   let valids = fmap (findRate drs) (fmap (\(E.Value a) -> a) ppts)
-  return $ join (listToMaybe (fmap (fmap entityKey) valids))
+  return $ listToMaybe $ catMaybes (fmap (fmap entityKey) valids)
 
 findRate :: [Entity DuesRate] -> Centi -> Maybe (Entity DuesRate)
 findRate rates amt = 
@@ -132,7 +144,8 @@ makeUser drs cid pid ct = do
   mbeml <- runDB $ get ppfe 
   eml <- unMaybeMsg mbeml "no email record!"
   mbdrid <- findPpDuesRate drs cid ppfe
-  drid <- unMaybeMsg mbdrid "no dues rate!"
+  ppyls <- findPpDuesRateDB drs cid ppfe
+  drid <- unMaybeMsg mbdrid $ "no dues rate! valid rates: " ++ (show (fmap (duesRateAmount . entityVal) drs)) ++ (show ppyls) ++ (show (catMaybes (fmap (findRate drs) ppyls)))
   uid <- runDB $ insert $ User (emailEmail eml) (paypalName pp) Nothing drid (utctDay ct)
   acctid <- runDB $ insert $ Account "defualt"
   useracct <-runDB $ insert $ UserAccount uid acctid
