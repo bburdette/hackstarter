@@ -79,7 +79,6 @@ defaultDues cid = do
                   (drname `T.append` (T.pack (show dramt)), drid))
                 dues
 
-
 getCreatePaypalMembersR :: ClubId -> Handler Html
 getCreatePaypalMembersR cid = do  
   (chex,ppids) <- makeChex cid
@@ -101,7 +100,7 @@ postCreatePaypalMembersR cid = do
     FormFailure meh -> error $ show meh
     FormMissing -> error "form missing"
     FormSuccess umk -> do
-      users <- makeUsers cid (paypals umk) 
+      users <- makeUsers cid (duesrate umk) (paypals umk) 
       defaultLayout $ do [whamlet|
         created users:
         <br> 
@@ -142,29 +141,39 @@ findRate rates amt =
   let matches = filter (\(Entity id rt) -> (duesRateAmount rt) == amt) rates in
   listToMaybe matches
 
-makeUsers :: ClubId -> [PaypalId] -> Handler [UserId]
-makeUsers cid ppids = do 
+makeUsers :: ClubId -> Maybe DuesRateId -> [PaypalId] -> Handler [UserId]
+makeUsers cid defaultdr ppids = do 
   -- for each paypal transaction create a user record, 
   -- and a user account.
   -- user recs require a dues rate, but is that really necessary?
   duesRates <- runDB $ selectList [DuesRateClub ==. cid] []
   curtime <- lift getCurrentTime
-  (mapM (\pid -> makeUser duesRates cid pid curtime) ppids)
+  (mapM (\pid -> makeUser duesRates cid pid defaultdr curtime) ppids)
 
-makeUser :: [Entity DuesRate] -> ClubId -> PaypalId -> UTCTime -> Handler UserId 
-makeUser drs cid pid ct = do 
+makeUser :: [Entity DuesRate] -> ClubId -> PaypalId -> Maybe DuesRateId -> UTCTime -> Handler UserId 
+makeUser drs cid pid mbdefdr ct = do 
   mbpp <- runDB $ get pid
   pp <- unMaybeMsg mbpp "no paypal record!"
   ppfe <- unMaybeMsg (paypalFromemail pp) "no pp email"
   mbeml <- runDB $ get ppfe 
   eml <- unMaybeMsg mbeml "no email record!"
   mbdrid <- findPpDuesRate drs cid ppfe
-  ppyls <- findPpDuesRateDB drs cid ppfe
-  drid <- unMaybeMsg mbdrid $ "no dues rate! valid rates: " ++ (show (fmap (duesRateAmount . entityVal) drs)) ++ (show ppyls) ++ (show (catMaybes (fmap (findRate drs) ppyls)))
-  uid <- runDB $ insert $ User (emailEmail eml) (paypalName pp) Nothing drid (utctDay ct)
-  acctid <- runDB $ insert $ Account "defualt"
+  case (mbdrid, mbdefdr) of 
+    (Just drid, _) -> do 
+      addUser (User (emailEmail eml) (paypalName pp) Nothing drid (utctDay ct))
+              ppfe
+    (Nothing, Just drid) -> 
+      addUser (User (emailEmail eml) (paypalName pp) Nothing drid (utctDay ct))
+              ppfe
+    (Nothing, Nothing) -> do 
+      ppyls <- findPpDuesRateDB drs cid ppfe
+      error $ "no dues rate! valid rates: " ++ (show (fmap (duesRateAmount . entityVal) drs)) ++ (show ppyls) ++ (show (catMaybes (fmap (findRate drs) ppyls)))
+      
+addUser :: User -> EmailId -> Handler UserId
+addUser userrec eid = do 
+  uid <- runDB $ insert $ userrec
+  acctid <- runDB $ insert $ Account "default"
   useracct <-runDB $ insert $ UserAccount uid acctid
-  accteml <- runDB $ insert $ AccountEmail acctid ppfe 
+  accteml <- runDB $ insert $ AccountEmail acctid eid
   return uid
-  
-
+ 
