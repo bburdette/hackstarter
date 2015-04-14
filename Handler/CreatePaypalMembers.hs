@@ -32,12 +32,14 @@ import Data.Maybe
 
 data UserMake = UserMake
   {
-    paypals :: [PaypalId] 
+    duesrate :: Maybe DuesRateId, 
+    paypals :: [PaypalId]
   }
 
-userMakeForm :: [(Text,PaypalId)] -> Maybe UserMake -> Form UserMake
-userMakeForm choisez mbum = renderDivs $ UserMake 
-  <$> areq (checkboxesFieldList choisez) "valid users?" (paypals <$> mbum)
+userMakeForm :: [(Text,DuesRateId)] -> [(Text,PaypalId)] -> Maybe UserMake -> Form UserMake
+userMakeForm duesrates userlist mbum = renderDivs $ UserMake 
+  <$> aopt (selectFieldList duesrates) "default dues rate:" (duesrate <$> mbum)
+  <*> areq (checkboxesFieldList userlist) "valid users?" (paypals <$> mbum)
 
 makeChex :: ClubId -> Handler ([(Text, PaypalId)], [PaypalId])
 makeChex cid = do  
@@ -67,10 +69,22 @@ makeChex cid = do
                ppid) <$> membs
   return (chex, ppids)
 
+defaultDues :: ClubId -> Handler [(Text, DuesRateId)]
+defaultDues cid = do 
+  dues <- runDB $ E.select $ E.from (\duesrate -> do 
+    E.where_ $ duesrate ^. DuesRateClub E.==. (E.val cid)
+    E.orderBy [E.asc $ duesrate ^. DuesRateAmount]
+    return (duesrate ^. DuesRateId, duesrate ^. DuesRateName, duesrate ^. DuesRateAmount))
+  return $ fmap (\(E.Value drid, E.Value drname, E.Value dramt) -> 
+                  (drname `T.append` (T.pack (show dramt)), drid))
+                dues
+
+
 getCreatePaypalMembersR :: ClubId -> Handler Html
 getCreatePaypalMembersR cid = do  
   (chex,ppids) <- makeChex cid
-  (umform, umenc) <- generateFormPost $ userMakeForm chex (Just $ UserMake ppids)
+  defdues <- defaultDues cid
+  (umform, umenc) <- generateFormPost $ userMakeForm defdues chex (Just $ UserMake Nothing ppids)
   defaultLayout $ do [whamlet|
     cppuresult:
     <form method=post enctype=#{ umenc }>
@@ -81,7 +95,8 @@ getCreatePaypalMembersR cid = do
 postCreatePaypalMembersR :: ClubId -> Handler Html
 postCreatePaypalMembersR cid = do 
   (chex,_) <- makeChex cid
-  ((res,_),_) <- runFormPost $ userMakeForm chex Nothing
+  defdues <- defaultDues cid
+  ((res,_),_) <- runFormPost $ userMakeForm defdues chex Nothing
   case res of 
     FormFailure meh -> error $ show meh
     FormMissing -> error "form missing"
