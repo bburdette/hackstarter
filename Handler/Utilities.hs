@@ -19,6 +19,7 @@ import qualified Data.Maybe as MB
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 import Util
+import Data.Text.Internal.Search as S
 
 paypalDir = "paypals"
 bankDir = "banks"
@@ -230,6 +231,47 @@ addBankTransaction creator trans = do
          (bAmount trans)
          (bCheckNumber trans)
 
+makePaypalInternalTransactions :: UserId -> AccountId -> Handler [PaypalInternalId]
+makePaypalInternalTransactions creatorid duesaccountid = do 
+  -- find paypal transactions from members to the club
+  -- where internal transactions don't exist already. 
+  ppls <- runDB $ E.select $ E.from (\paypal -> do 
+    E.where_ $ E.notIn (paypal ^. PaypalId) 
+                      (E.subList_select $ E.from (\ppi -> do 
+                          return $ ppi ^. PaypalInternalFrompaypal))
+    E.where_ $ E.in_ (paypal ^. PaypalToemail) 
+                     (E.subList_select $ E.from (\accteml -> do 
+                        E.where_ $ accteml ^. AccountEmailAccount E.==. E.val duesaccountid
+                        return $ E.just $ accteml ^. AccountEmailEmail))
+    E.where_ $ E.in_ (paypal ^. PaypalFromemail)
+      (E.subList_select $ E.from (\accteml -> do 
+        return $ E.just $ accteml ^. AccountEmailEmail))
+    return (paypal ^. PaypalId, paypal ^. PaypalFromemail, paypal ^. PaypalAmountGross))
+  trans <- mapM insertTrans ppls 
+  return $ concat trans
+  where insertTrans (E.Value ppid, E.Value ppfrmeml, E.Value ppamt) = do
+          -- might be multiple accounts!  what then?
+          accts <- runDB $ E.select $ E.from (\acctemail -> do
+            E.where_ $ E.just (acctemail ^. AccountEmailEmail)
+              E.==. E.val ppfrmeml  
+            return (acctemail ^. AccountEmailAccount))
+          mapM (insertTran ppid ppamt) accts
+        insertTran ppid ppamt (E.Value acctid) = do 
+          now <- lift getCurrentTime
+          runDB $ insert $ 
+            PaypalInternal ppid acctid creatorid now 
+              ppamt False
+
+{-
+PaypalInternal
+    frompaypal PaypalId
+    toaccount AccountId
+    creator UserId
+    date UTCTime default=CURRENT_TIMESTAMP
+    amount Centi
+    manual Bool 
+-} 
+
 -- version where we create user accounts if they don't exist.
 -- uh oh, user idents are sposed to be unique!!
 {-
@@ -349,7 +391,7 @@ getUtilitiesR = do
   requireAdmin logid 
   clubchoices <- clubsGet
   (cppuFormWidget, cppuFormEnctype) <- generateFormPost $ identifyForm "cppu" $ pickClubForm clubchoices Nothing 
-  (cpptFormWidget, cpptFormEnctype) <- generateFormPost $ identifyForm "cppt" mehForm
+  (cpptFormWidget, cpptFormEnctype) <- generateFormPost $ identifyForm "cppt" $ pickClubForm clubchoices Nothing 
   (ppFormWidget, ppFormEnctype) <- generateFormPost $ identifyForm "paypal" $ renderDivs $
     fileAFormReq "Upload (UTF-8) paypal transaction file:"
   (bkFormWidget, bkFormEnctype) <- generateFormPost $ identifyForm "bank" $ renderDivs $
@@ -382,7 +424,7 @@ postUtilitiesR = do
   requireAdmin logid
   clubchoices <- clubsGet
   ((cppuresult, _), _) <- runFormPost $ identifyForm "cppu" $ pickClubForm clubchoices Nothing 
-  ((cpptresult, _), _) <- runFormPost $ identifyForm "cppt" mehForm
+  ((cpptresult, _), _) <- runFormPost $ identifyForm "cppt" $ pickClubForm clubchoices Nothing 
   ((ppresult, ppFormWidget), ppFormEnctype) <- runFormPost $ identifyForm "paypal" paypalForm 
   ((bkresult, ppFormWidget), bkFormEnctype) <- runFormPost $ identifyForm "bank" paypalForm 
   let handlerName = "postUtilitiesR" :: Text
@@ -439,13 +481,38 @@ postUtilitiesR = do
                 redirect $ CreatePaypalMembersR (club pcf)
               FormFailure err -> error $ show err
               FormMissing -> case cpptresult of 
-                FormSuccess meh -> do 
-                  defaultLayout $ do [whamlet|
-                    cpptresult:
-                    <br> #{ (mehVal meh) }
-                  |]
+                FormSuccess pcf -> do 
+                  -- get the dues account for the club.  how?
+                  mbacctid <- getClubDuesAccount (club pcf)
+                  case mbacctid of 
+                    Just acctid -> do  
+                      well <- makePaypalInternalTransactions logid acctid
+                      defaultLayout $ do [whamlet|
+                        cpptresult:
+                        <br> #{ show well } 
+                      |]
+                    Nothing -> do 
+                      defaultLayout $ do [whamlet|
+                        no dues account found for club!
+                      |]
+                    
                 FormFailure err -> error $ show err
                 FormMissing -> error "form missing"             
+
+getClubDuesAccount :: ClubId -> Handler (Maybe AccountId)
+getClubDuesAccount cid = do 
+  -- get all club accounts.   
+  rawaccts <- runDB $ E.select $ E.from (\account -> do 
+    E.where_ $ E.in_ (account ^. AccountId) (E.subList_select $ E.from 
+      (\clubacct -> do 
+         E.where_ $ clubacct ^. ClubAccountClub E.==. E.val cid
+         return $ clubacct ^. ClubAccountAccount))
+    return (account ^. AccountId, account ^. AccountName))
+  -- does one account contain 'dues' in the name?
+  let accts = (\(E.Value acctid, E.Value acctname) -> (acctid, acctname)) <$> rawaccts
+      duesaccts = 
+        filter (\(id,name) -> (not . L.null) (S.indices "dues" (T.toLower name))) accts
+  return $ MB.listToMaybe $ (\(id,_) -> id) <$> duesaccts
 
 {-           
     emails
