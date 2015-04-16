@@ -132,10 +132,17 @@ checkDefaultClub = do
   case firstclub of 
     Just (Entity cid club) -> return cid 
     Nothing -> do
-      cid <- runDB $ insert $ Club "default" 
+      cid <- addClub "default" 
       return cid
       
-
+addClub :: Text -> Handler ClubId
+addClub name = do 
+  -- make a dues account.
+  daid <- runDB $ insert $ Account "dues"
+  clubid <- runDB $ insert $ Club name daid 
+  _ <- runDB $ insert $ ClubAccount clubid daid
+  return clubid
+ 
 -- make sure there's an admin permission, and an admin user.
 checkAdmin :: Handler (Maybe UserId)
 checkAdmin = do 

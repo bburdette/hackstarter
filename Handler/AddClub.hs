@@ -32,7 +32,8 @@ postAddClubR = do
   ((res, userWidget),enctype) <- runFormPost addClubForm 
   case res of
     FormSuccess club -> do
-      _ <- runDB $ insert $ Club (name club)
+      -- make a dues account.
+      addClub (name club)
       redirect $ ClubsR
 
 

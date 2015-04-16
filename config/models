@@ -8,6 +8,7 @@ User
     deriving Typeable Show
 Club
     name Text
+    duesaccount AccountId
     UniqueClub name
 ClubEmail
     club ClubId

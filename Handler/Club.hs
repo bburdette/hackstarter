@@ -11,9 +11,10 @@ data ClubForm = ClubForm
   name :: Text
   }
 
-clubForm :: Maybe Club -> Form Club
-clubForm dr = renderDivs $ Club
+clubForm :: [(Text, AccountId)] -> Maybe Club -> Form Club
+clubForm accts dr = renderDivs $ Club
  <$> areq textField "Club name" (clubName <$> dr) 
+ <*> areq (selectFieldList accts) "dues account" (clubDuesaccount <$> dr) 
 
 data EmailForm = EmailForm
   {
@@ -32,9 +33,6 @@ getClubR cid = do
   mbclub <- runDB $ get cid
   case mbclub of 
     Just _ -> do
-      (widge,enc) <- generateFormPost $ identifyForm "club" $ clubForm mbclub
-      (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
-      (ewidge,eenc) <- generateFormPost $ identifyForm "email" $ emailForm Nothing
       -- read club accounts, account emails.
       accounts <- runDB $ E.select $ E.from $ \(E.InnerJoin clubaccount account) -> do 
         E.on ((clubaccount ^. ClubAccountClub E.==. (E.val cid)) E.&&.
@@ -57,6 +55,11 @@ getClubR cid = do
                   accountemail ^. AccountEmailId,
                   email ^. EmailId, 
                   email ^. EmailEmail)
+      -- set up forms. 
+      let acctchoices = (\(_,E.Value ai,E.Value an) -> (an, ai)) <$> accounts
+      (widge,enc) <- generateFormPost $ identifyForm "club" $ clubForm acctchoices mbclub
+      (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
+      (ewidge,eenc) <- generateFormPost $ identifyForm "email" $ emailForm Nothing
       let accountEmailGrid = foldl (addacct accountemails) [] accounts
           addacct accemls lst (clubAccountId, accountId, accountName) = 
             let emls = filter (\(acct,_,_,_) -> acct == accountId) accemls
@@ -126,9 +129,6 @@ postClubR cid = do
       _ <- runDB $ delete cid
       redirect ClubsR
     Nothing -> do 
-      ((c_res, _),_) <- runFormPost $ identifyForm "club" $ clubForm Nothing
-      ((a_res, _),_) <- runFormPost $ identifyForm "account" $ accountForm Nothing
-      ((e_res, _),_) <- runFormPost $ identifyForm "email" $ emailForm Nothing
       accounts <- runDB $ E.select $ E.from $ \(E.InnerJoin clubaccount account) -> do 
         E.on ((clubaccount ^. ClubAccountClub E.==. (E.val cid)) E.&&.
               (clubaccount ^. ClubAccountAccount E.==. account ^. AccountId))
@@ -141,6 +141,10 @@ postClubR cid = do
         return (clubemail ^. ClubEmailId, 
                 email ^. EmailId,
                 email ^. EmailEmail)
+      let acctchoices = (\(_,E.Value ai,E.Value an) -> (an, ai)) <$> accounts
+      ((c_res, _),_) <- runFormPost $ identifyForm "club" $ clubForm acctchoices Nothing
+      ((a_res, _),_) <- runFormPost $ identifyForm "account" $ accountForm Nothing
+      ((e_res, _),_) <- runFormPost $ identifyForm "email" $ emailForm Nothing
       ((ce_res,_),_) <- runFormPost $ identifyForm "accountemail" $ 
         accountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
       -- ((ce_res,_),_) <- runFormPost $ identifyForm "accountemail" $  clubAccountEmail [] [] Nothing
