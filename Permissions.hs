@@ -154,14 +154,11 @@ checkAdmin = do
         Nothing -> do 
           -- add an admin user.
           defcid <- checkDefaultClub
-          mbdrid <- checkDuesRate defcid "default" 0
-          case mbdrid of 
-            Just drid -> do 
-              curtime <- lift getCurrentTime
-              uid <- runDB $ insert $ User "admin" "" Nothing drid (utctDay curtime)
-              upid <- runDB $ insert $ UserPermission uid pid uid
-              return $ Just uid
-            _ -> return Nothing
+          -- mbdrid <- checkDuesRate defcid "default" 0
+          curtime <- lift getCurrentTime
+          uid <- runDB $ insert $ User "admin" "" Nothing (utctDay curtime)
+          upid <- runDB $ insert $ UserPermission uid pid uid
+          return $ Just uid
         Just (Entity upid up) -> return $ Just (userPermissionUser up)
     _ -> return Nothing
 

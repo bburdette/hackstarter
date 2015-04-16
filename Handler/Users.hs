@@ -9,14 +9,12 @@ import           Database.Esqueleto      ((^.))
 getUsersAdminR :: Handler Html
 getUsersAdminR = do
   users <- runDB $ E.select 
-    $ E.from $ \(E.InnerJoin user duesRate) -> do 
-      E.on $ user ^. UserDuesrate E.==. duesRate ^. DuesRateId
+    $ E.from $ \user -> do 
       return 
         ( user ^. UserId,
           user ^. UserIdent, 
-          user ^. UserName, 
-          duesRate ^. DuesRateName, 
-          duesRate ^. DuesRateAmount ) 
+          user ^. UserName 
+        ) 
   defaultLayout $ do
     aDomId <- newIdent
     $(widgetFile "users")

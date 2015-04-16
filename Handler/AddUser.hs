@@ -7,9 +7,9 @@ import Control.Monad
 
 getAddUserR :: Handler Html
 getAddUserR = do
-  drs <- getDuesRates
+  -- drs <- getDuesRates
   curtime <- lift getCurrentTime
-  (userWidget, enctype) <- generateFormPost (userFormAdmin (utctDay curtime) (drList drs) Nothing)
+  (userWidget, enctype) <- generateFormPost (userFormAdmin (utctDay curtime) Nothing)
   defaultLayout $ [whamlet|
     <h2> Add a new user:
     <form method=post enctype=#{enctype}>
@@ -18,9 +18,9 @@ getAddUserR = do
 
 postAddUserR :: Handler Html
 postAddUserR = do
-  drs <- getDuesRates
+  -- drs <- getDuesRates
   curtime <- lift getCurrentTime
-  ((res, userWidget),enctype) <- runFormPost (userFormAdmin (utctDay curtime) (drList drs) Nothing)
+  ((res, userWidget),enctype) <- runFormPost (userFormAdmin (utctDay curtime) Nothing)
   case res of
     FormSuccess user -> do
       usarID <- runDB $ insert user 

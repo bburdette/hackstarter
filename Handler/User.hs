@@ -109,7 +109,7 @@ getUserAdminR logid userId = do
   admin <- isAdmin logid
   mbUser <- runDB $ get userId
   curtime <- lift getCurrentTime
-  duesrates <- getDuesRates
+  -- duesrates <- getDuesRates
   addpermissions <- getPermAddList logid admin 
   userperms <- getUserPermissions userId
   useremails <- getUserEmails userId
@@ -119,7 +119,7 @@ getUserAdminR logid userId = do
   case mbUser of 
     Nothing -> error "user id not found."
     Just user -> do 
-      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userFormAdmin (utctDay curtime) (drList duesrates) (Just user))
+      (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userFormAdmin (utctDay curtime) (Just user))
       (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm addpermissions 
       (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
       (uewidge,ueenc) <- generateFormPost $ identifyForm "accountemail" $ 
@@ -200,7 +200,7 @@ postUserR uid =
           permissions <- getPermissions
           ((u_result, formWidget), formEnctype) 
               <- runFormPost $
-                  identifyForm "user" (userFormAdmin (utctDay curtime) (drList duesrates) Nothing)   
+                  identifyForm "user" (userFormAdmin (utctDay curtime) Nothing)   
           ((p_result, permWidget), permEnctype) 
               <- runFormPost $ identifyForm "perm" (addPermForm (permList permissions)) 
           ((a_res, _), _) <- runFormPost $ identifyForm "account" $ accountForm Nothing

@@ -2,7 +2,6 @@ User
     ident Text
     name Text
     password Text Maybe
-    duesrate DuesRateId
     createdate Day 
     UniqueUser ident
     deriving Typeable Show

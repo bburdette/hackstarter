@@ -22,16 +22,14 @@ userFormSelf user = renderDivs $ User
   <$> areq textField "handle" (Just $ userIdent user)
   <*> areq textField "name" (Just $ userName user)
   <*> aopt passwordField "Pwd" (Just $ userPassword user)
-  <*> pure (userDuesrate user)
   <*> areq dayField ("Create Date" { fsAttrs = [("readonly", "")] }) 
         (Just $ userCreatedate user) 
 
-userFormAdmin :: Day -> [(Text, Key DuesRate)] -> Maybe User -> Form User 
-userFormAdmin curday duesrates user = renderDivs $ User 
+userFormAdmin :: Day -> Maybe User -> Form User 
+userFormAdmin curday user = renderDivs $ User 
   <$> areq textField "handle" (userIdent <$> user)
   <*> areq textField "name" (userName <$> user)
   <*> aopt passwordField "Pwd" (userPassword <$> user)
-  <*> areq (selectFieldList duesrates) "Dues rate" (userDuesrate <$> user)
   <*> areq dayField ("Create Date" { fsAttrs = [("readonly", "")] }) 
         (ornow curday user) 
 

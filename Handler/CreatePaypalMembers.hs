@@ -32,14 +32,12 @@ import Data.Maybe
 
 data UserMake = UserMake
   {
-    duesrate :: Maybe DuesRateId, 
     paypals :: [PaypalId]
   }
 
-userMakeForm :: [(Text,DuesRateId)] -> [(Text,PaypalId)] -> Maybe UserMake -> Form UserMake
-userMakeForm duesrates userlist mbum = renderDivs $ UserMake 
-  <$> aopt (selectFieldList duesrates) "default dues rate:" (duesrate <$> mbum)
-  <*> areq (checkboxesFieldList userlist) "valid users?" (paypals <$> mbum)
+userMakeForm :: [(Text,PaypalId)] -> Maybe UserMake -> Form UserMake
+userMakeForm userlist mbum = renderDivs $ UserMake 
+  <$> areq (checkboxesFieldList userlist) "valid users?" (paypals <$> mbum)
 
 makeChex :: ClubId -> Handler ([(Text, PaypalId)], [PaypalId])
 makeChex cid = do  
@@ -82,8 +80,7 @@ defaultDues cid = do
 getCreatePaypalMembersR :: ClubId -> Handler Html
 getCreatePaypalMembersR cid = do  
   (chex,ppids) <- makeChex cid
-  defdues <- defaultDues cid
-  (umform, umenc) <- generateFormPost $ userMakeForm defdues chex (Just $ UserMake Nothing ppids)
+  (umform, umenc) <- generateFormPost $ userMakeForm chex (Just $ UserMake ppids)
   defaultLayout $ do [whamlet|
     cppuresult:
     <form method=post enctype=#{ umenc }>
@@ -95,12 +92,12 @@ postCreatePaypalMembersR :: ClubId -> Handler Html
 postCreatePaypalMembersR cid = do 
   (chex,_) <- makeChex cid
   defdues <- defaultDues cid
-  ((res,_),_) <- runFormPost $ userMakeForm defdues chex Nothing
+  ((res,_),_) <- runFormPost $ userMakeForm chex Nothing
   case res of 
     FormFailure meh -> error $ show meh
     FormMissing -> error "form missing"
     FormSuccess umk -> do
-      users <- makeUsers cid (duesrate umk) (paypals umk) 
+      users <- makeUsers cid (paypals umk) 
       defaultLayout $ do [whamlet|
         created users:
         <br> 
@@ -141,34 +138,24 @@ findRate rates amt =
   let matches = filter (\(Entity id rt) -> (duesRateAmount rt) == amt) rates in
   listToMaybe matches
 
-makeUsers :: ClubId -> Maybe DuesRateId -> [PaypalId] -> Handler [UserId]
-makeUsers cid defaultdr ppids = do 
+makeUsers :: ClubId -> [PaypalId] -> Handler [UserId]
+makeUsers cid ppids = do 
   -- for each paypal transaction create a user record, 
   -- and a user account.
   -- user recs require a dues rate, but is that really necessary?
-  duesRates <- runDB $ selectList [DuesRateClub ==. cid] []
   curtime <- lift getCurrentTime
-  (mapM (\pid -> makeUser duesRates cid pid defaultdr curtime) ppids)
+  (mapM (\pid -> makeUser cid pid curtime) ppids)
 
-makeUser :: [Entity DuesRate] -> ClubId -> PaypalId -> Maybe DuesRateId -> UTCTime -> Handler UserId 
-makeUser drs cid pid mbdefdr ct = do 
+makeUser :: ClubId -> PaypalId -> UTCTime -> Handler UserId 
+makeUser cid pid ct = do 
   mbpp <- runDB $ get pid
   pp <- unMaybeMsg mbpp "no paypal record!"
   ppfe <- unMaybeMsg (paypalFromemail pp) "no pp email"
   mbeml <- runDB $ get ppfe 
   eml <- unMaybeMsg mbeml "no email record!"
-  mbdrid <- findPpDuesRate drs cid ppfe
-  case (mbdrid, mbdefdr) of 
-    (Just drid, _) -> do 
-      addUser (User (emailEmail eml) (paypalName pp) Nothing drid (utctDay ct))
-              ppfe
-    (Nothing, Just drid) -> 
-      addUser (User (emailEmail eml) (paypalName pp) Nothing drid (utctDay ct))
-              ppfe
-    (Nothing, Nothing) -> do 
-      ppyls <- findPpDuesRateDB drs cid ppfe
-      error $ "no dues rate! valid rates: " ++ (show (fmap (duesRateAmount . entityVal) drs)) ++ (show ppyls) ++ (show (catMaybes (fmap (findRate drs) ppyls)))
-      
+  addUser (User (emailEmail eml) (paypalName pp) Nothing (utctDay ct))
+          ppfe
+     
 addUser :: User -> EmailId -> Handler UserId
 addUser userrec eid = do 
   uid <- runDB $ insert $ userrec

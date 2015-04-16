@@ -3,13 +3,11 @@
   <tr>
     <th> User ID
     <th> Name
-    <th> Dues Rate
     <th> 
-  $forall (E.Value usrId, E.Value usrident, E.Value usrName, E.Value drname, E.Value dramt) <- users
+  $forall (E.Value usrId, E.Value usrident, E.Value usrName) <- users
     <tr> 
       <td> <a href=@{UserR usrId}> #{usrident} 
       <td> #{usrName} 
-      <td> #{drname} #{show dramt}
       <td> 
         <a href=@{UserTransactionsR usrId}> transactions
 
