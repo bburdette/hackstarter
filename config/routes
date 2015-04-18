@@ -37,3 +37,4 @@
 /clubAccountDelete/#ClubAccountId ClubAccountDeleteR POST
 /accountEmailRemove/#AccountEmailId AccountEmailRemoveR POST
 /createpaypalmembers/#ClubId CreatePaypalMembersR GET POST
+/account/#AccountId AccountR GET POST

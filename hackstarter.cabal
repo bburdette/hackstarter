@@ -58,6 +58,7 @@ library
                      Handler.ClubAccountDelete
                      Handler.AccountEmailRemove
                      Handler.CreatePaypalMembers
+                     Handler.Account
                      Permissions
 
     if flag(dev) || flag(library-only)

@@ -93,6 +93,9 @@ spuliton cond frnt (s:ss)  =
     spuliton cond (s:frnt) ss
 
 getUserTransactionsR :: UserId -> Handler Html
+getUserTransactionsR _ = error "blah" 
+
+{-
 getUserTransactionsR uid = do
   logid <- requireAuthId
   admin <- isAdmin logid
@@ -104,6 +107,18 @@ getUserTransactionsR uid = do
       case (mbusr, mbdacct) of 
         (Just usr, Just dacct) -> do 
           pis <- getAccountPaypalInternal dacct
+          internals <- getAccountInternals dacct 
+              id, 
+              fromaccount, 
+              fromAccountName,
+              toaccount,
+              toAccountName,
+              creatorId,
+              creatorIdent,
+              date,
+              amount,
+              manual)
+ :: AccountId -> Handler [(InternalId, AccountId, Text, AccountId, Text, UserId, Text, UTCTime, Centi, Bool)]
           defaultLayout $ do
             [whamlet| 
               <h3> paypal->internal for user: 
@@ -125,8 +140,36 @@ getUserTransactionsR uid = do
                     <td> #{show datetime}
                     <td> #{show amount} 
                     <td> #{show manual} 
-            |]
+              <h3> internal->internal for user: 
+                <a href=@{UserR uid}>#{userIdent usr} 
+              <table class="low">
+              <tr>
+                <th> fromaccount
+                <th> #{ fromAccountName }
+                <th> toaccoun
+                <th> toAccountName
+                <th> creatorI
+                <th> creatorIdent
+                <th> date
+                <th> amount
+                <th> manual
+                   <th> from paypal
+                <th> to account
+                <th> created by
+                <th> datetime
+                <th> amount 
+                <th> manual
+              $forall (ppid, toacctid, toacctname, creatorid, creatorident, datetime, amount, manual) <- pis
+                <tr>
+                  <td> #{ show ppid }
+                  <td> #{ toacctname } 
+                  <td> 
+                    <a href=@{UserR creatorid}> #{ creatorident }
+                  <td> #{show datetime}
+                  <td> #{show amount} 
+                  <td> #{show manual} 
+                          |]
         _ -> error "error"
- 
+ -}
 postUserTransactionsR :: UserId -> Handler Html
 postUserTransactionsR = error "Not yet implemented: postUserTransactionsR"
