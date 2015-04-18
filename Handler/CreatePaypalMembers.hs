@@ -159,7 +159,7 @@ makeUser cid pid ct = do
 addUser :: User -> EmailId -> Handler UserId
 addUser userrec eid = do 
   uid <- runDB $ insert $ userrec
-  acctid <- runDB $ insert $ Account "default"
+  acctid <- runDB $ insert $ Account "dues"
   useracct <-runDB $ insert $ UserAccount uid acctid
   accteml <- runDB $ insert $ AccountEmail acctid eid
   return uid
