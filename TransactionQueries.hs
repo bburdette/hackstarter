@@ -102,7 +102,7 @@ getAccountPaypals acctid = do
       E.on $ usercreator ^. UserId E.==. paypal ^. PaypalCreator
       E.on (paypal ^. PaypalToemail E.==. email2 E.?. EmailId)
       E.on (paypal ^. PaypalFromemail E.==. email E.?. EmailId)
-      E.where_ $ E.in_ (paypal ^. PaypalToemail) 
+      E.where_ $ E.in_ (paypal ^. PaypalFromemail) 
                        (E.subList_select $ E.from 
                          (\acctemail -> do 
                            E.where_ $ acctemail ^. AccountEmailAccount E.==. (E.val acctid)
