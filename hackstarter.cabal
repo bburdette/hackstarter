@@ -22,6 +22,7 @@ library
                      UserForm
                      Settings
                      Util
+                     TransactionQueries
                      Settings.StaticFiles
                      Settings.Development
                      Handler.Home
