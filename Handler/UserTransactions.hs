@@ -2,6 +2,7 @@ module Handler.UserTransactions where
 
 import Import
 import Permissions
+import TransactionQueries
 import Data.List
 import Data.Fixed
 import Data.Time.Clock
@@ -92,11 +93,6 @@ spuliton cond frnt (s:ss)  =
     spuliton cond (s:frnt) ss
 
 getUserTransactionsR :: UserId -> Handler Html
-getUserTransactionsR _ = error "unimplemented"
-
- {-
-
-getUserTransactionsR :: UserId -> Handler Html
 getUserTransactionsR uid = do
   logid <- requireAuthId
   admin <- isAdmin logid
@@ -104,65 +100,33 @@ getUserTransactionsR uid = do
     False -> error "unauthorized"
     True -> do
       mbusr <- runDB $ get uid
-      -- bal <- getUserBalance uid
-      case mbusr of 
-        Nothing -> error "invalid user id"
-        Just usr -> do 
-          ledges <- runDB $ E.select 
-            $ E.from $ \(E.InnerJoin user ledger) -> do 
-              E.where_ $ ledger ^. LedgerFromuser E.==. (E.val $ Just uid)
-              E.on $ user ^. UserId E.==. ledger ^. LedgerCreator
-              E.orderBy $ [E.asc ( ledger ^. LedgerDate)]
-              return 
-                ( ledger ^. LedgerAmountGross,
-                  ledger ^. LedgerAmountNet,
-                  ledger ^. LedgerDate,
-                  ledger ^. LedgerCreator,
-                  user ^. UserIdent ) 
-          plainledges <- runDB $ selectList [LedgerFromuser ==. Just uid] [Asc LedgerDate]
-          duesrates <- runDB $ selectList [] [Asc DuesRateAmount]
-          let transes = map (\(Entity xk x) -> (ledgerDate x, ledgerAmountGross x)) 
-                            plainledges
-              drs = map (\(Entity k v) -> duesRateAmount v) duesrates
-              dues = calcDues transes drs
-          -- let dues = take 10 (calcDues transes drs)
+      mbdacct <- getDuesAccount uid
+      case (mbusr, mbdacct) of 
+        (Just usr, Just dacct) -> do 
+          pis <- getAccountPaypalInternal dacct
           defaultLayout $ do
             [whamlet| 
-              <h3> transactions for user: 
+              <h3> paypal->internal for user: 
                 <a href=@{UserR uid}>#{userIdent usr} 
-              <br>
-                $if (admin)
-                  <a href=@{AddLedgerEntryR uid}> add transaction 
-              <table class="sum">
-                <tr>
-                  <th> balance
-                <tr>
-                  <td> #{show bal}
               <table class="low">
                 <tr>
-                  <th> gross
-                  <th> net
-                  <th> datetime
+                  <th> from paypal
+                  <th> to account
                   <th> created by
-                $forall (E.Value gamount, E.Value namount, E.Value datetime, E.Value creatorid, E.Value creatorIdent) <- ledges
-                  <tr>
-                    <td> #{gamount}
-                    <td> #{namount}
-                    <td> #{show datetime}
-                    <td> #{creatorIdent}
-              <h3> Estimated dues payments
-              <table class="dues">
-                <tr>
                   <th> datetime
-                  <th> amount  
-                  <th> balance 
-                $forall (DuesEntry date amount bal) <- dues 
+                  <th> amount 
+                  <th> manual
+                $forall (ppid, toacctid, toacctname, creatorid, creatorident, datetime, amount, manual) <- pis
                   <tr>
-                    <td> #{show date}
-                    <td> #{show amount}
-                    <td> #{show bal}
+                    <td> #{ show ppid }
+                    <td> #{ toacctname } 
+                    <td> 
+                      <a href=@{UserR creatorid}> #{ creatorident }
+                    <td> #{show datetime}
+                    <td> #{show amount} 
+                    <td> #{show manual} 
             |]
--}
-
+        _ -> error "error"
+ 
 postUserTransactionsR :: UserId -> Handler Html
 postUserTransactionsR = error "Not yet implemented: postUserTransactionsR"
