@@ -6,9 +6,29 @@ import Import
 import Data.Fixed
 --import Data.Text
 import Data.Time.Clock
+import Data.Text.Internal.Search as S
+import qualified Data.Maybe as MB
+import qualified Data.Text as T
+-- import Data
 --import Data.Time.Calendar
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
+
+-- get the first user account with 'dues' in the name.  
+-- hopefully we'll replace this lame-o mechanism soon.
+getDuesAccount :: UserId -> Handler (Maybe AccountId)
+getDuesAccount uid = do 
+  rawaccts <- runDB $ E.select $ E.from (\account -> do 
+    E.where_ $ E.in_ (account ^. AccountId) (E.subList_select $ E.from 
+      (\useracct -> do 
+         E.where_ $ useracct ^. UserAccountUser E.==. E.val uid
+         return $ useracct ^. UserAccountAccount))
+    return (account ^. AccountId, account ^. AccountName))
+  -- does one account contain 'dues' in the name?
+  let accts = (\(E.Value acctid, E.Value acctname) -> (acctid, acctname)) <$> rawaccts
+      duesaccts = 
+        filter (\(id,name) -> (not . null) (S.indices "dues" (T.toLower name))) accts
+  return $ fst <$> MB.listToMaybe duesaccts
 
 ----------------------------------------------------------
 -- get all transactions
