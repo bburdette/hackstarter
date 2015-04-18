@@ -3,6 +3,7 @@ module Handler.UserTransactions where
 import Import
 import Permissions
 import Data.List
+import Data.Fixed
 import Data.Time.Clock
 import Data.Time.Calendar
 import qualified Database.Esqueleto      as E
@@ -23,8 +24,8 @@ getUserBalance uid = do
 
 data DuesEntry = DuesEntry {
   date :: UTCTime,
-  amount :: Int,
-  balance :: Int
+  amount :: Centi,
+  balance :: Centi
   }
   deriving Show
 
@@ -36,11 +37,11 @@ data DuesEntry = DuesEntry {
 
 -- assuming transactions are in ascending order by time.
 -- assuming all these are FOR dues
-calcDues :: [(UTCTime, Int)] -> [Int] -> [DuesEntry]
+calcDues :: [(UTCTime, Centi)] -> [Centi] -> [DuesEntry]
 calcDues transactions duesrates = 
   makeDues (filter ((<) 0) (sort duesrates)) Nothing 0 transactions
 
-makeDues :: [Int] -> (Maybe (UTCTime, Int)) -> Int -> [(UTCTime, Int)] -> [DuesEntry]
+makeDues :: [Centi] -> (Maybe (UTCTime, Centi)) -> Centi -> [(UTCTime, Centi)] -> [DuesEntry]
 -- if no more transactions, we're done making dues entries.
 makeDues _ Nothing _ [] = []
 makeDues drs (Just (time,amt)) bal [] = 
@@ -90,10 +91,12 @@ spuliton cond frnt (s:ss)  =
   else
     spuliton cond (s:frnt) ss
 
+getUserTransactionsR :: UserId -> Handler Html
+getUserTransactionsR _ = error "unimplemented"
+
+ {-
 
 getUserTransactionsR :: UserId -> Handler Html
-getUserTransactionsR uid = error "unimplelmented" 
-{-
 getUserTransactionsR uid = do
   logid <- requireAuthId
   admin <- isAdmin logid
@@ -101,7 +104,7 @@ getUserTransactionsR uid = do
     False -> error "unauthorized"
     True -> do
       mbusr <- runDB $ get uid
-      bal <- getUserBalance uid
+      -- bal <- getUserBalance uid
       case mbusr of 
         Nothing -> error "invalid user id"
         Just usr -> do 
@@ -160,6 +163,6 @@ getUserTransactionsR uid = do
                     <td> #{show bal}
             |]
 -}
- 
+
 postUserTransactionsR :: UserId -> Handler Html
 postUserTransactionsR = error "Not yet implemented: postUserTransactionsR"
