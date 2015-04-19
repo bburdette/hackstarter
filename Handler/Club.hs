@@ -23,7 +23,7 @@ data EmailForm = EmailForm
 
 emailForm :: Maybe EmailForm -> Form EmailForm
 emailForm emlf = renderDivs $ EmailForm
- <$> areq textField "add new Email:" (emName <$> emlf) 
+ <$> areq textField "add new email:" (emName <$> emlf) 
 
 
 getClubR :: ClubId -> Handler Html
@@ -87,9 +87,6 @@ getClubR cid = do
                 <td> 
                   <a href="#" onClick="post('@{ClubEmailRemoveR ceid}', {})"> remove
           <br>
-          <form method=post enctype=#{eenc}> 
-            ^{ewidge}
-            <input type=submit value=add existing email>
           <table>
             <tr>
               <th> account 
@@ -114,9 +111,13 @@ getClubR cid = do
                         $of Nothing
                             
           <br>
+          <form method=post enctype=#{eenc}> 
+            ^{ewidge}
+            <input type=submit value=add existing email>
           <form method=post enctype=#{aenc}> 
             ^{awidge}
             <input type=submit value=add account>
+          add email to account:
           <form method=post enctype=#{aenc}> 
             ^{cewidge}
             <input type=submit value=add email>

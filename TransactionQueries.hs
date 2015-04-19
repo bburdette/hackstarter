@@ -96,17 +96,23 @@ getInternals = do
 ----------------------------------------------------------
 
 getAccountPaypals :: AccountId -> Handler [(PaypalId, UTCTime, Centi, Centi, Text, Text, Text, Maybe Text, Maybe Text, UserId, Text)]
-getAccountPaypals acctid = do 
+getAccountPaypals acctid = do
+  -- there should be a better way than repeating that sublist query!
   paypals <- runDB $ E.select $ E.from $ 
     \(E.InnerJoin (E.LeftOuterJoin (E.LeftOuterJoin paypal email) email2) usercreator) -> do 
       E.on $ usercreator ^. UserId E.==. paypal ^. PaypalCreator
       E.on (paypal ^. PaypalToemail E.==. email2 E.?. EmailId)
       E.on (paypal ^. PaypalFromemail E.==. email E.?. EmailId)
-      E.where_ $ E.in_ (paypal ^. PaypalFromemail) 
+      E.where_ $ (E.in_ (paypal ^. PaypalFromemail) 
                        (E.subList_select $ E.from 
                          (\acctemail -> do 
                            E.where_ $ acctemail ^. AccountEmailAccount E.==. (E.val acctid)
-                           return $ E.just (acctemail ^. AccountEmailEmail)))
+                           return $ E.just (acctemail ^. AccountEmailEmail))))
+           E.||. (E.in_ (paypal ^. PaypalToemail) 
+                       (E.subList_select $ E.from 
+                         (\acctemail -> do 
+                           E.where_ $ acctemail ^. AccountEmailAccount E.==. (E.val acctid)
+                           return $ E.just (acctemail ^. AccountEmailEmail))))
       E.orderBy $ [E.asc ( paypal ^. PaypalDate)]
       return 
         ( paypal ^. PaypalId,
