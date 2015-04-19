@@ -63,11 +63,12 @@ getClubR cid = do
       let accountEmailGrid = foldl (addacct accountemails) [] accounts
           addacct accemls lst (clubAccountId, accountId, accountName) = 
             let emls = filter (\(acct,_,_,_) -> acct == accountId) accemls
-                news = (accountName, Just clubAccountId, E.Value "", Nothing) : 
-                  (fmap (\(_,acctemlid,_,emltxt) -> (E.Value "", Nothing, emltxt, Just acctemlid)) emls) in 
+                news = (Just accountId, accountName, Just clubAccountId, E.Value "", Nothing) : 
+                  (fmap (\(_,acctemlid,_,emltxt) 
+                    -> (Nothing, E.Value "", Nothing, emltxt, Just acctemlid)) emls) in 
               lst ++ news
       (cewidge,ceenc) <- generateFormPost $ identifyForm "accountemail" $ 
-        accountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
+        accountEmailForm (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
       defaultLayout $ do
         [whamlet|
           <h4> Club Maintenance
@@ -93,9 +94,12 @@ getClubR cid = do
             <tr>
               <th> account 
               <th> email
-            $forall (E.Value account, mbclubacctid, E.Value email, mbaccountemailid) <- accountEmailGrid
+            $forall (mbaccountid, E.Value accountname, mbclubacctid, E.Value email, mbaccountemailid) <- accountEmailGrid
               <tr>
-                <td> #{ account }
+                $maybe (E.Value acctid) <- mbaccountid
+                  <td> <a href=@{AccountR acctid}> #{ accountname }
+                $nothing
+                  <td> #{ accountname } 
                 <td> #{ email }
                 <td>
                   $case mbclubacctid 
@@ -146,7 +150,7 @@ postClubR cid = do
       ((a_res, _),_) <- runFormPost $ identifyForm "account" $ accountForm Nothing
       ((e_res, _),_) <- runFormPost $ identifyForm "email" $ emailForm Nothing
       ((ce_res,_),_) <- runFormPost $ identifyForm "accountemail" $ 
-        accountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
+        accountEmailForm (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
       -- ((ce_res,_),_) <- runFormPost $ identifyForm "accountemail" $  clubAccountEmail [] [] Nothing
       case c_res of 
         FormSuccess club -> do 

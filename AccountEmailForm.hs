@@ -12,8 +12,8 @@ data AccountEmailForm = AccountEmailForm
   emailId :: EmailId 
   }
 
-accountEmail :: [(Text, Key Account)] -> [(Text, Key Email)] -> Maybe AccountEmailForm -> Form AccountEmailForm
-accountEmail accounts emails caef = renderDivs $ AccountEmailForm
+accountEmailForm :: [(Text, Key Account)] -> [(Text, Key Email)] -> Maybe AccountEmailForm -> Form AccountEmailForm
+accountEmailForm accounts emails caef = renderDivs $ AccountEmailForm
   <$> areq (selectFieldList accounts) "Account" (accountId <$> caef)
   <*> areq (selectFieldList emails) "Emails" (emailId <$> caef)
 

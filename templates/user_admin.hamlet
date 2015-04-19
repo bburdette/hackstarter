@@ -21,9 +21,13 @@
   <tr>
     <th> account 
     <th> email
-  $forall (E.Value account, mbuseracctid, E.Value email, mbaccountemailid) <- acctemlgrid
-    <tr>
-      <td> #{ account }
+  $forall (account, mbuseracctid, email, mbaccountemailid) <- acctemlgrid
+    <tr> 
+      <td> 
+        $maybe id <- mbuseracctid
+          <a href=@{AccountR id}> #{ account }
+        $nothing
+          #{ account } 
       <td> #{ email }
 
 <form method=post enctype=#{aenc}>

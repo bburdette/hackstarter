@@ -70,6 +70,7 @@ addPermForm :: [(Text, Key Permission)] -> Form PermId
 addPermForm permlist = renderDivs $ PermId
  <$> areq (selectFieldList permlist) "Add Permission" Nothing
 
+getUserAccounts :: UserId -> Handler [(UserAccountId, AccountId, Text)]
 getUserAccounts uid = do
   blah <- runDB $ E.select $ E.from $ 
     \(E.InnerJoin useraccount account) -> do
@@ -78,8 +79,9 @@ getUserAccounts uid = do
       return (useraccount ^. UserAccountId,
               account ^. AccountId,
               account ^. AccountName)
-  return blah
+  return $ (\(E.Value a, E.Value b, E.Value c) -> (a,b,c)) <$> blah 
  
+getUserAccountEmails :: UserId -> Handler [(AccountId, AccountEmailId, EmailId, Text)]
 getUserAccountEmails uid = do
   accountemails <- runDB $ E.select $ E.from $ 
     \(E.InnerJoin (E.InnerJoin useraccount accountemail) email) -> do
@@ -90,14 +92,17 @@ getUserAccountEmails uid = do
               accountemail ^. AccountEmailId,
               email ^. EmailId, 
               email ^. EmailEmail)
-  return accountemails
+  return $ (\(E.Value a, E.Value b, E.Value c, E.Value d) -> (a,b,c,d)) <$> accountemails 
 
+accountEmailGrid :: [(UserAccountId, AccountId, Text)] 
+                 -> [(AccountId, AccountEmailId, EmailId, Text)] 
+                 -> [(Text, Maybe AccountId, Text, Maybe EmailId)]
 accountEmailGrid accounts accountemails = 
   foldl (addacct accountemails) [] accounts
-  where addacct accemls lst (userAccountId, accountId, accountName) = 
-          let emls = filter (\(acct,_,_,_) -> acct == accountId) accemls
-              news = (accountName, Just userAccountId, E.Value "", Nothing) : 
-                (fmap (\(_,acctemlid,_,emltxt) -> (E.Value "", Nothing, emltxt, Just acctemlid)) emls) in 
+  where addacct accemls lst (useraccountid, accountid, accountname) = 
+          let emls = filter (\(acct,_,_,_) -> acct == accountid) accemls
+              news = (accountname, Just accountid, "", Nothing) : 
+                (fmap (\(_,_,emlid,emltxt) -> ("", Nothing, emltxt, Just emlid)) emls) in 
             lst ++ news
 
 
@@ -123,7 +128,7 @@ getUserAdminR logid userId = do
       (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm addpermissions 
       (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
       (uewidge,ueenc) <- generateFormPost $ identifyForm "accountemail" $ 
-        accountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> 
+        accountEmailForm (fmap (\(_,accid,acctxt) -> 
                             (acctxt, accid)) accounts) 
                      (fmap (\(Entity id email) -> 
                             (emailEmail email, id)) useremails) 
@@ -205,7 +210,7 @@ postUserR uid =
               <- runFormPost $ identifyForm "perm" (addPermForm (permList permissions)) 
           ((a_res, _), _) <- runFormPost $ identifyForm "account" $ accountForm Nothing
           ((ae_res, _), _) <- runFormPost $ identifyForm "accountemail" $ 
-            accountEmail (fmap (\(_,E.Value accid,E.Value acctxt) -> 
+            accountEmailForm (fmap (\(_,accid,acctxt) -> 
                                 (acctxt, accid)) accounts) 
                          (fmap (\(Entity id email) -> 
                                 (emailEmail email, id)) useremails) 
