@@ -3,13 +3,10 @@
   <tr>
     <th> User ID
     <th> Name
-    <th> 
   $forall (E.Value usrId, E.Value usrident, E.Value usrName) <- users
     <tr> 
       <td> <a href=@{UserR usrId}> #{usrident} 
       <td> #{usrName} 
-      <td> 
-        <a href=@{UserTransactionsR usrId}> transactions
 
 <br>
 <a href=@{AddUserR}> Add a user

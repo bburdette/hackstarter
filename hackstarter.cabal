@@ -37,7 +37,6 @@ library
                      Handler.AddDuesRate
                      Handler.DuesRate
                      Handler.AddLedgerEntry
-                     Handler.UserTransactions
                      Handler.Ledger
                      Handler.Permissions
                      Handler.Permission

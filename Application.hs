@@ -42,7 +42,6 @@ import Handler.DuesRates
 import Handler.AddDuesRate
 import Handler.DuesRate
 import Handler.AddLedgerEntry
-import Handler.UserTransactions
 import Handler.Ledger
 import Handler.Permissions
 import Handler.Permission

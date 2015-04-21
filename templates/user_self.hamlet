@@ -7,8 +7,6 @@
 
 <br>member since: #{show (userCreatedate user)}
 
-<a href=@{UserTransactionsR userId}> show ledger entries
-
 <table>
   <tr>
     <th> Permissions

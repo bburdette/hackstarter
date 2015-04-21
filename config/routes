@@ -15,7 +15,6 @@
 /addduesrate/#ClubId AddDuesRateR GET POST
 /duesrate/#DuesRateId DuesRateR GET POST
 /addledgerentry/#UserId AddLedgerEntryR GET POST
-/usertransactions/#UserId UserTransactionsR GET POST
 /ledger/ LedgerR GET POST
 /permissions PermissionsR GET POST
 /permission/#PermissionId PermissionR GET POST
