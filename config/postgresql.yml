@@ -1,0 +1,33 @@
+# NOTE: These settings can be overridden by environment variables as well, in
+# particular:
+#
+#    PGHOST
+#    PGPORT
+#    PGUSER
+#    PGPASS
+#    PGDATABASE
+
+Default: &defaults
+  user: hackstarter
+  password: hackstarter
+  host: localhost
+  port: 5432
+  database: hackstarter
+  poolsize: 10
+
+Development:
+  <<: *defaults
+
+Testing:
+  database: hackstarter_test
+  <<: *defaults
+
+Staging:
+  database: hackstarter_staging
+  poolsize: 100
+  <<: *defaults
+
+Production:
+  database: hackstarter_production
+  poolsize: 100
+  <<: *defaults
