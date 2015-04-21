@@ -23,6 +23,10 @@ getUserBalance uid = do
           _ -> return 0) 
 -}
 
+getDuesRates :: ClubId -> HandlerT App IO [Entity DuesRate] 
+getDuesRates cid = do
+  runDB $ selectList [DuesRateClub ==. cid] []
+
 data DuesEntry = DuesEntry {
   date :: UTCTime,
   amount :: Centi,

@@ -154,12 +154,13 @@ makeUser cid pid ct = do
   mbeml <- runDB $ get ppfe 
   eml <- unMaybeMsg mbeml "no email record!"
   addUser (User (emailEmail eml) (paypalName pp) Nothing (utctDay ct))
+          cid
           ppfe
      
-addUser :: User -> EmailId -> Handler UserId
-addUser userrec eid = do 
+addUser :: User -> ClubId -> EmailId -> Handler UserId
+addUser userrec clubid eid = do 
   uid <- runDB $ insert $ userrec
-  acctid <- runDB $ insert $ Account "dues"
+  acctid <- runDB $ insert $ Account "dues" clubid
   useracct <-runDB $ insert $ UserAccount uid acctid
   accteml <- runDB $ insert $ AccountEmail acctid eid
   return uid

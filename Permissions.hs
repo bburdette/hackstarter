@@ -138,11 +138,12 @@ checkDefaultClub = do
 addClub :: Text -> Handler ClubId
 addClub name = do 
   -- make a dues account.
-  daid <- runDB $ insert $ Account "dues"
-  clubid <- runDB $ insert $ Club name daid 
+  clubid <- runDB $ insert $ Club name Nothing 
+  daid <- runDB $ insert $ Account "dues" clubid
+  _ <- runDB $ update clubid [ClubDuesaccount =. Just daid]
   _ <- runDB $ insert $ ClubAccount clubid daid
   return clubid
- 
+
 -- make sure there's an admin permission, and an admin user.
 checkAdmin :: Handler (Maybe UserId)
 checkAdmin = do 

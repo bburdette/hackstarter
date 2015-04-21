@@ -5,6 +5,7 @@ import Import
 accountForm :: Maybe Account -> Form Account
 accountForm acc = renderDivs $ Account
  <$> areq textField "add new account:" (accountName <$> acc) 
+ <*> areq hiddenField "ignorethis" (accountClub <$> acc) 
 
 data AccountEmailForm = AccountEmailForm
   {

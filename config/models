@@ -7,7 +7,7 @@ User
     deriving Typeable Show
 Club
     name Text
-    duesaccount AccountId
+    duesaccount AccountId Maybe
     UniqueClub name
 ClubEmail
     club ClubId
@@ -75,7 +75,8 @@ Internal
     amount Centi
     manual Bool 
 Account
-    name  Text
+    name Text
+    club ClubId
 AccountEmail
     account AccountId
     email EmailId

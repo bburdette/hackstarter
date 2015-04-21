@@ -68,7 +68,7 @@ getAccountR aid = do
       emails <- getAccountEmails aid
       ppyls <- getAccountPaypals aid
       pis <- getAccountPaypalInternal aid
-      internals <- getAccountInternals aid 
+      internals <- getAccountInternals aid
       defaultLayout $ do
         [whamlet| 
           <h3> account "#{ fromMaybe "" (accountName <$> mbacct) }"

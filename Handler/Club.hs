@@ -11,7 +11,7 @@ data ClubForm = ClubForm
   name :: Text
   }
 
-clubForm :: [(Text, AccountId)] -> Maybe Club -> Form Club
+clubForm :: [(Text, Maybe AccountId)] -> Maybe Club -> Form Club
 clubForm accts dr = renderDivs $ Club
  <$> areq textField "Club name" (clubName <$> dr) 
  <*> areq (selectFieldList accts) "dues account" (clubDuesaccount <$> dr) 
@@ -56,7 +56,7 @@ getClubR cid = do
                   email ^. EmailId, 
                   email ^. EmailEmail)
       -- set up forms. 
-      let acctchoices = (\(_,E.Value ai,E.Value an) -> (an, ai)) <$> accounts
+      let acctchoices = (\(_,E.Value ai,E.Value an) -> (an, Just ai)) <$> accounts
       (widge,enc) <- generateFormPost $ identifyForm "club" $ clubForm acctchoices mbclub
       (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
       (ewidge,eenc) <- generateFormPost $ identifyForm "email" $ emailForm Nothing
@@ -123,7 +123,8 @@ getClubR cid = do
             <input type=submit value=add email>
         |]
     Nothing -> error $ "club id not found: " ++ show cid
-      
+  
+
 postClubR :: ClubId -> Handler Html
 postClubR cid = do 
   login <- requireAuthId
@@ -146,13 +147,13 @@ postClubR cid = do
         return (clubemail ^. ClubEmailId, 
                 email ^. EmailId,
                 email ^. EmailEmail)
-      let acctchoices = (\(_,E.Value ai,E.Value an) -> (an, ai)) <$> accounts
-      ((c_res, _),_) <- runFormPost $ identifyForm "club" $ clubForm acctchoices Nothing
+      let acctchoices = (\(_,E.Value ai,E.Value an) -> (an, ai)) <$> accounts :: [(Text, AccountId)]
+          mbacctchoices = (\(an, ai) -> (an, Just ai)) <$> acctchoices :: [(Text, Maybe AccountId)]
+      ((c_res, _),_) <- runFormPost $ identifyForm "club" $ clubForm mbacctchoices Nothing
       ((a_res, _),_) <- runFormPost $ identifyForm "account" $ accountForm Nothing
       ((e_res, _),_) <- runFormPost $ identifyForm "email" $ emailForm Nothing
       ((ce_res,_),_) <- runFormPost $ identifyForm "accountemail" $ 
-        accountEmailForm (fmap (\(_,E.Value accid,E.Value acctxt) -> (acctxt, accid)) accounts) (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
-      -- ((ce_res,_),_) <- runFormPost $ identifyForm "accountemail" $  clubAccountEmail [] [] Nothing
+        accountEmailForm acctchoices (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing
       case c_res of 
         FormSuccess club -> do 
           runDB $ replace cid club
@@ -185,21 +186,4 @@ postClubR cid = do
                     FormFailure errs -> error $ "Errors: " ++ show errs 
                     FormMissing -> error "no form" 
 
-{-
-postDuesRateR :: DuesRateId -> Handler Html
-postDuesRateR dri = do
-  _ <- requireAuthId
-  mbDel <- lookupPostParam "delete"
-  case mbDel of 
-    Just del -> do 
-      _ <- runDB $ do 
-        delete dri 
-      redirect DuesRatesR
-    Nothing -> do 
-      ((res,widg),enctype) <- runFormPost (duesRateForm Nothing)
-      case res of 
-        FormSuccess dr -> do 
-          _ <- runDB $ replace dri dr
-          redirect DuesRatesR
-        _ -> error "bad format error"
--} 
+
