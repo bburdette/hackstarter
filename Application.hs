@@ -65,6 +65,7 @@ import Handler.ClubAccountDelete
 import Handler.AccountEmailRemove
 import Handler.CreatePaypalMembers
 import Handler.Account
+import Handler.AccountDues
 
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the

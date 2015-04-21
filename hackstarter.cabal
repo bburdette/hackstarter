@@ -15,6 +15,7 @@ library
     exposed-modules: Application
                      AccountEmailForm
                      DuesRateForm
+                     DuesTransactions
                      PermissionForm 
                      Foundation
                      Import
@@ -59,6 +60,7 @@ library
                      Handler.AccountEmailRemove
                      Handler.CreatePaypalMembers
                      Handler.Account
+                     Handler.AccountDues
                      Permissions
 
     if flag(dev) || flag(library-only)

@@ -38,3 +38,4 @@
 /accountEmailRemove/#AccountEmailId AccountEmailRemoveR POST
 /createpaypalmembers/#ClubId CreatePaypalMembersR GET POST
 /account/#AccountId AccountR GET POST
+/accountdues/#AccountId AccountDuesR GET POST
