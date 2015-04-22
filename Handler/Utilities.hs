@@ -246,20 +246,19 @@ makePaypalInternalTransactions creatorid duesaccountid = do
     E.where_ $ E.in_ (paypal ^. PaypalFromemail)
       (E.subList_select $ E.from (\accteml -> do 
         return $ E.just $ accteml ^. AccountEmailEmail))
-    return (paypal ^. PaypalId, paypal ^. PaypalFromemail, paypal ^. PaypalAmountGross))
+    return (paypal ^. PaypalId, paypal ^. PaypalFromemail, paypal ^. PaypalAmountGross, paypal ^. PaypalDate ))
   trans <- mapM insertTrans ppls 
   return $ concat trans
-  where insertTrans (E.Value ppid, E.Value ppfrmeml, E.Value ppamt) = do
+  where insertTrans (E.Value ppid, E.Value ppfrmeml, E.Value ppamt, E.Value ppdate) = do
           -- might be multiple accounts!  what then?
           accts <- runDB $ E.select $ E.from (\acctemail -> do
             E.where_ $ E.just (acctemail ^. AccountEmailEmail)
               E.==. E.val ppfrmeml  
             return (acctemail ^. AccountEmailAccount))
-          mapM (insertTran ppid ppamt) accts
-        insertTran ppid ppamt (E.Value acctid) = do 
-          now <- lift getCurrentTime
+          mapM (insertTran ppid ppamt ppdate) accts
+        insertTran ppid ppamt ppdate (E.Value acctid) = do 
           runDB $ insert $ 
-            PaypalInternal ppid acctid creatorid now 
+            PaypalInternal ppid acctid creatorid ppdate 
               ppamt False
 
 {-
