@@ -93,6 +93,7 @@ getAccountR aid = do
            $forall (id, eml) <- emails 
               <tr>
                 <td> #{ eml } 
+          <a href=@{AccountDuesR aid} > generate dues transactions
           <h3> internal->internal transactions 
           <table class="low">
             <tr>
