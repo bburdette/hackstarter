@@ -62,6 +62,7 @@ getPaypalInternal = do
     \(E.InnerJoin (E.InnerJoin ppi user) account) -> do
       E.on $ ppi ^. PaypalInternalToaccount E.==. account ^. AccountId 
       E.on $ ppi ^. PaypalInternalCreator E.==. user ^. UserId
+      E.orderBy [E.asc (ppi ^. PaypalInternalDate)]
       return (ppi ^. PaypalInternalFrompaypal, 
               ppi ^. PaypalInternalToaccount,
               account ^. AccountName,
@@ -79,6 +80,7 @@ getInternals = do
       E.on $ internal ^. InternalToaccount E.==. toacct ^. AccountId 
       E.on $ internal ^. InternalFromaccount E.==. frmacct ^. AccountId
       E.on $ internal ^. InternalCreator E.==. user ^. UserId
+      E.orderBy [E.asc $ internal ^. InternalDate]
       return (internal ^. InternalId, 
               internal ^. InternalFromaccount, 
               frmacct ^. AccountName,
@@ -135,6 +137,7 @@ getAccountPaypalInternal aid = do
       E.on $ ppi ^. PaypalInternalToaccount E.==. account ^. AccountId 
       E.on $ ppi ^. PaypalInternalCreator E.==. user ^. UserId
       E.where_ $ ppi ^. PaypalInternalToaccount E.==. (E.val aid)
+      E.orderBy [E.asc $ ppi ^. PaypalInternalDate]
       return (ppi ^. PaypalInternalFrompaypal, 
               ppi ^. PaypalInternalToaccount,
               account ^. AccountName,
@@ -154,6 +157,7 @@ getAccountInternals aid = do
       E.on $ internal ^. InternalCreator E.==. user ^. UserId
       E.where_ $ (internal ^. InternalToaccount E.==. (E.val aid)) 
         E.||. (internal ^. InternalFromaccount E.==. (E.val aid))
+      E.orderBy [E.asc $ internal ^. InternalDate]
       return (internal ^. InternalId, 
               internal ^. InternalFromaccount, 
               frmacct ^. AccountName,
