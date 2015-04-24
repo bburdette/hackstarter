@@ -52,9 +52,10 @@ makeDues :: [Centi] -> (Maybe (UTCTime, Centi)) -> Centi -> [(UTCTime, Centi)] -
 makeDues _ Nothing _ [] = []
 makeDues drs (Just (time,amt)) bal [] = 
   if (bal >= amt)
-    then let nexttime = addMonths time 1 in 
-      (DuesEntry nexttime amt bal) : 
-        (makeDues drs (Just (nexttime, amt)) (bal-amt) [])
+    then let nexttime = addMonths time 1 
+             newbal = bal - amt in 
+      (DuesEntry nexttime amt newbal) : 
+        (makeDues drs (Just (nexttime, amt)) newbal [])
     else []
 -- add transactions until the balance is >= one of the dues rates.  that's our initial
 -- dues rate, and dues transaction datetime.
@@ -63,9 +64,10 @@ makeDues duesrates Nothing argbalance ((time,amt):rest) =
       rates = takeWhile ((>=) balance) duesrates in 
   case rates of 
     [] -> makeDues duesrates Nothing (balance + amt) rest
-    ratez -> let rate = last ratez in 
-      (DuesEntry time rate balance) : 
-         makeDues duesrates (Just (time, rate)) (balance - rate) rest
+    ratez -> let rate = last ratez 
+                 newbal = balance - rate in 
+      (DuesEntry time rate newbal) : 
+         makeDues duesrates (Just (time, rate)) newbal rest
 makeDues duesrates (Just (lasttime, lastrate)) balance ((time,amt):rest) = 
   let nextdate = addMonths lasttime 2 in
   if (time > nextdate) 
@@ -77,7 +79,7 @@ makeDues duesrates (Just (lasttime, lastrate)) balance ((time,amt):rest) =
       if newbalance >= rate
         then let ddate = addMonths lasttime 1 
                  nbal = newbalance - rate in 
-          (DuesEntry ddate rate newbalance) : makeDues duesrates (Just (ddate, rate)) nbal rest 
+          (DuesEntry ddate rate nbal) : makeDues duesrates (Just (ddate, rate)) nbal rest 
         else makeDues duesrates (Just (lasttime, rate)) newbalance rest 
 
 addMonths :: UTCTime -> Integer -> UTCTime
