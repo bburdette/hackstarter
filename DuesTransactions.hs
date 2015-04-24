@@ -10,19 +10,6 @@ import Data.Time.Calendar
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
 
-{-
-getUserBalance :: UserId -> Handler Int
-getUserBalance uid = do
-  (runDB $ E.select 
-    $ E.from $ \lolwut -> do 
-      let sumamt = (E.sum_ (lolwut ^. LedgerAmountGross))
-      E.where_ $ lolwut ^. LedgerFromuser E.==. (E.val $ Just uid)
-      return sumamt) >>= (\x -> 
-        case x of 
-          [E.Value (Just amt)] -> return amt
-          _ -> return 0) 
--}
-
 data DuesEntry = DuesEntry {
   date :: UTCTime,
   amount :: Centi,

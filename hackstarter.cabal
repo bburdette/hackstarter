@@ -60,6 +60,7 @@ library
                      Handler.CreatePaypalMembers
                      Handler.Account
                      Handler.AccountDues
+                     Handler.AddInternal
                      Permissions
 
     if flag(dev) || flag(library-only)

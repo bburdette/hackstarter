@@ -2,9 +2,7 @@ module DuesRateForm where
 
 import Import
 
-import Data.Fixed
-import Data.Text.Read
-import Data.Text
+import Util
 
 {-
 
@@ -26,26 +24,6 @@ $newline never
     showI x = show (fromIntegral x :: Integer)
 
 -}
-
-
-centiField :: (Monad m, RenderMessage (HandlerSite m) FormMessage) => Field m Centi
-centiField = Field
-    { fieldParse = parseHelper $ \s ->
-        case Data.Text.Read.signed Data.Text.Read.rational s of
-            Right (a, "") -> Right a
-            _ -> Left $ MsgInvalidNumber s
-
-    , fieldView = \theId name attrs val isReq -> toWidget [hamlet|
-$newline never
-<input id="#{theId}" name="#{name}" *{attrs} type="number" step=.01 :isReq:required="" value="#{showVal val}">
-|]
-    , fieldEnctype = UrlEncoded
-    }
-  where
-    showVal = either id (pack . showC)
-    showC x = show (x :: Centi)
-
-
 
 
 duesRateForm :: ClubId -> Maybe DuesRate -> Form DuesRate

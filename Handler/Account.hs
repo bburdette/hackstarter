@@ -95,6 +95,7 @@ getAccountR aid = do
                 <td> #{ eml } 
           <a href=@{AccountDuesR aid} > generate dues transactions
           <h3> internal->internal transactions 
+          <a href=@{ AddInternalR aid }> add new 
           <table class="low">
             <tr>
               <th> from account
