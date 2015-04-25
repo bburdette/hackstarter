@@ -58,7 +58,7 @@ getClubR cid = do
       -- set up forms. 
       let acctchoices = (\(_,E.Value ai,E.Value an) -> (an, Just ai)) <$> accounts
       (widge,enc) <- generateFormPost $ identifyForm "club" $ clubForm acctchoices mbclub
-      (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
+      (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountWClubForm cid
       (ewidge,eenc) <- generateFormPost $ identifyForm "email" $ emailForm Nothing
       let accountEmailGrid = foldl (addacct accountemails) [] accounts
           addacct accemls lst (clubAccountId, accountId, accountName) = 
@@ -150,7 +150,7 @@ postClubR cid = do
       let acctchoices = (\(_,E.Value ai,E.Value an) -> (an, ai)) <$> accounts :: [(Text, AccountId)]
           mbacctchoices = (\(an, ai) -> (an, Just ai)) <$> acctchoices :: [(Text, Maybe AccountId)]
       ((c_res, _),_) <- runFormPost $ identifyForm "club" $ clubForm mbacctchoices Nothing
-      ((a_res, _),_) <- runFormPost $ identifyForm "account" $ accountForm Nothing
+      ((a_res, _),_) <- runFormPost $ identifyForm "account" $ accountWClubForm cid
       ((e_res, _),_) <- runFormPost $ identifyForm "email" $ emailForm Nothing
       ((ce_res,_),_) <- runFormPost $ identifyForm "accountemail" $ 
         accountEmailForm acctchoices (fmap (\(_,E.Value emlid,E.Value emltxt) -> (emltxt, emlid)) emails) Nothing

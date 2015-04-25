@@ -20,7 +20,7 @@ getAccountUsers aid = do
         E.where_ $ useracct ^. UserAccountAccount E.==. (E.val aid)
         return $ useracct ^. UserAccountUser))
     return $ (user ^. UserId, user ^. UserIdent)) 
-  return $ (\(E.Value a, E.Value b) -> (a,T.append "meh" b)) <$> blah
+  return $ (\(E.Value a, E.Value b) -> (a,b)) <$> blah
 
 getAccountClubs :: AccountId -> Handler [(ClubId, Text)]
 getAccountClubs aid = do 

@@ -118,6 +118,7 @@ getUserAdminR logid userId = do
   addpermissions <- getPermAddList logid admin 
   userperms <- getUserPermissions userId
   useremails <- getUserEmails userId
+  clubs <- getClubChoices
   accounts <- getUserAccounts userId
   accountEmails <- getUserAccountEmails userId
   let acctemlgrid = accountEmailGrid accounts accountEmails
@@ -126,7 +127,7 @@ getUserAdminR logid userId = do
     Just user -> do 
       (formWidget, formEnctype) <- generateFormPost $ identifyForm "user" $ (userFormAdmin (utctDay curtime) (Just user))
       (permWidget, permEnctype) <- generateFormPost $ identifyForm "perm" $ addPermForm addpermissions 
-      (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountForm Nothing
+      (awidge,aenc) <- generateFormPost $ identifyForm "account" $ accountForm clubs Nothing
       (uewidge,ueenc) <- generateFormPost $ identifyForm "accountemail" $ 
         accountEmailForm (fmap (\(_,accid,acctxt) -> 
                             (acctxt, accid)) accounts) 
@@ -190,6 +191,14 @@ getUserR userId = do
     (False, True) -> getUserSelfR userId
     (False, False) -> getUserUserR logid userId
 
+getClubChoices :: Handler [(Text,ClubId)]
+getClubChoices = do 
+  rawclubs <- runDB $ E.select $ E.from $ 
+    (\clubs -> do 
+      E.orderBy [E.asc (clubs ^. ClubName)]
+      return (clubs ^. ClubName, clubs ^. ClubId))
+  return $ (\(E.Value a, E.Value b) -> (a, b)) <$> rawclubs
+
 postUserR :: UserId -> Handler Html
 postUserR uid = 
     do
@@ -202,13 +211,14 @@ postUserR uid =
           curtime <- lift getCurrentTime
           useremails <- getUserEmails uid
           accounts <- getUserAccounts uid
+          clubs <- getClubChoices
           permissions <- getPermissions
           ((u_result, formWidget), formEnctype) 
               <- runFormPost $
                   identifyForm "user" (userFormAdmin (utctDay curtime) Nothing)   
           ((p_result, permWidget), permEnctype) 
               <- runFormPost $ identifyForm "perm" (addPermForm (permList permissions)) 
-          ((a_res, _), _) <- runFormPost $ identifyForm "account" $ accountForm Nothing
+          ((a_res, _), _) <- runFormPost $ identifyForm "account" $ accountForm clubs Nothing
           ((ae_res, _), _) <- runFormPost $ identifyForm "accountemail" $ 
             accountEmailForm (fmap (\(_,accid,acctxt) -> 
                                 (acctxt, accid)) accounts) 

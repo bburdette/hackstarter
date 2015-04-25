@@ -2,10 +2,15 @@ module AccountEmailForm where
 
 import Import
 
-accountForm :: Maybe Account -> Form Account
-accountForm acc = renderDivs $ Account
- <$> areq textField "add new account:" (accountName <$> acc) 
- <*> areq hiddenField "ignorethis" (accountClub <$> acc) 
+accountForm :: [(Text,ClubId)] -> Maybe Account -> Form Account
+accountForm clubs mbacc = renderDivs $ Account
+ <$> areq textField "add new account:" (accountName <$> mbacc) 
+ <*> areq (selectFieldList clubs) "in club" (accountClub <$> mbacc) 
+
+accountWClubForm :: ClubId -> Form Account
+accountWClubForm cid = renderDivs $ Account
+ <$> areq textField "add new account:" Nothing
+ <*> areq hiddenField "" (Just cid)
 
 data AccountEmailForm = AccountEmailForm
   {
