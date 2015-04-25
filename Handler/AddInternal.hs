@@ -7,9 +7,8 @@ import Data.Time.Calendar
 import Data.Time.Clock
 import Data.Time.LocalTime
 import Database.Esqueleto
--- import qualified Database.Persist as P
 import qualified Data.Text as T
--- import qualified Database.Persist as P
+
 {-
 
 what this should show:
@@ -52,14 +51,20 @@ getUserAccountChoices aid = do
                (account ^. AccountId !=. val aid)
       orderBy [asc (user ^. UserIdent), asc (account ^. AccountName)]
       return (account ^. AccountId, account ^. AccountName, user ^. UserIdent))
-  let mek = \(Value acctid, Value aname, Value uident) -> 
-             (aname `T.append` " - " `T.append` uident, acctid)
-  return $ mek <$> rawchoices
+  rawclubchoices <- runDB $ select $ from 
+    (\(InnerJoin (InnerJoin account clubaccount) club) -> do
+      on $ clubaccount ^. ClubAccountClub ==. club ^. ClubId
+      on $ account ^. AccountId ==. clubaccount ^. ClubAccountAccount
+      where_ $ (account ^. AccountClub ==. val aclub) &&.
+               (account ^. AccountId !=. val aid)
+      orderBy [asc (club ^. ClubName), asc (account ^. AccountName)]
+      return (account ^. AccountId, account ^. AccountName, club ^. ClubName))
+  let mek = \(Value acctid, Value aname, Value ident) -> 
+             (ident `T.append` " - " `T.append` aname, acctid)
+  return $ mek <$> (rawclubchoices ++ rawchoices)
       
 getAddInternalR :: AccountId -> Handler Html
 getAddInternalR aid = do 
-  mbacct <- runDB $ get aid
-  acct <- unMaybeMsg mbacct "account not found"
   tochoices <- getUserAccountChoices aid
   now <- lift getCurrentTime
   (form,formenc) <- generateFormPost $ addInternalForm tochoices (Just now)
