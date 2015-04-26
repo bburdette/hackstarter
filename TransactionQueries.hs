@@ -14,8 +14,8 @@ import qualified Data.Map.Strict as Map
 
 -- get the first user account with 'dues' in the nam  
 -- hopefully we'll replace this lame-o mechanism soon.
-getDuesAccount :: UserId -> Handler (Maybe AccountId)
-getDuesAccount uid = do 
+getUserDuesAccount :: UserId -> Handler (Maybe AccountId)
+getUserDuesAccount uid = do 
   rawaccts <- runDB $ select $ from (\account -> do 
     where_ $ in_ (account ^. AccountId) (subList_select $ from 
       (\useracct -> do 

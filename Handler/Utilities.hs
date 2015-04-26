@@ -28,15 +28,6 @@ paypalForm :: Form FileInfo
 paypalForm = renderDivs $ 
     fileAFormReq "" 
 
-data Meh = Meh 
-  {
-  mehVal :: Text
-  }
-
-mehForm :: Form Meh
-mehForm = renderDivs $ Meh 
-  <$> areq hiddenField "" (Just (T.pack "a"))
-
 data Blah = Blah
   {
     chegBockses :: [Int]
