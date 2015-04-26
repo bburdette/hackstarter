@@ -104,15 +104,20 @@ getAccountR aid = do
               <th> date
               <th> amount
               <th> manual
-            $forall (id, fromaccount, fromAccountName, toaccount, toAccountName, creatorId, creatorIdent, datetime, amount, manual) <- internals
+            $forall (id, fromaccount, fromAccountName, mbFromAccountOwners, toaccount, toAccountName, mbToAccountOwners, creatorId, creatorIdent, datetime, amount, manual) <- internals
               <tr>
-                <td> <a href=@{AccountR fromaccount}> #{ fromAccountName } 
-                <td> <a href=@{AccountR toaccount}> #{ toAccountName } 
+                <td> 
+                  <a href=@{AccountR fromaccount}> #{ fromAccountName }
+                <td> 
+                  <a href=@{AccountR toaccount}> #{ toAccountName } 
                 <td> 
                   <a href=@{UserR creatorId}> #{ creatorIdent }
                 <td> #{show datetime}
                 <td> #{show amount} 
                 <td> #{show manual} 
+              <tr>
+                <td> #{ fromMaybe "" mbFromAccountOwners } 
+                <td> #{ fromMaybe "" mbToAccountOwners } 
           <h3> paypal->internal transactions
           <table class="low">
             <tr>

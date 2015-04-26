@@ -9,6 +9,9 @@ import Data.Text.Internal.Search as S
 import qualified Data.Maybe as MB
 import qualified Data.Text as T
 
+import qualified Data.Set as Set
+import qualified Data.Map.Strict as Map
+
 -- get the first user account with 'dues' in the nam  
 -- hopefully we'll replace this lame-o mechanism soon.
 getDuesAccount :: UserId -> Handler (Maybe AccountId)
@@ -143,7 +146,7 @@ getAccountPaypalInternal aid = do
               ppi ^. PaypalInternalManual)
   return $ (\(Value a, Value b, Value c, Value d, Value e, Value f, Value g, Value h) -> (a,b,c,d,e,f,g,h)) <$> ppis 
 
-getAccountInternals :: AccountId -> Handler [(InternalId, AccountId, Text, AccountId, Text, UserId, Text, UTCTime, Centi, Bool)]
+getAccountInternals :: AccountId -> Handler [(InternalId, AccountId, Text, Maybe Text, AccountId, Text, Maybe Text, UserId, Text, UTCTime, Centi, Bool)]
 getAccountInternals aid = do 
   internals <- runDB $ select $ from $ 
     \(InnerJoin (InnerJoin (InnerJoin internal user) frmacct) toacct) -> do
@@ -163,6 +166,28 @@ getAccountInternals aid = do
               internal ^. InternalDate,
               internal ^. InternalAmount,
               internal ^. InternalManual)
-  return $ (\(Value a, Value b, Value c, Value d, Value e, Value f, Value g, Value h, Value i, Value j) -> (a,b,c,d,e,f,g,h,i,j)) <$> internals 
+  let prelim = (\(Value a, Value b, Value c, Value d, Value e, Value f, Value g, Value h, Value i, Value j) -> (a,b,c,d,e,f,g,h,i,j)) <$> internals 
+      fromaccts = (\(_,a,_,_,_,_,_,_,_,_) -> a) <$> prelim
+      toaccts = (\(_,_,_,a,_,_,_,_,_,_) -> a) <$> prelim
+      allaccts = Set.toList $ Set.fromList $ fromaccts ++ toaccts
+  ownertext <- mapM getAccountOwners allaccts 
+  
+  let ot = zip allaccts ownertext
+      results = (\(a,to,c,from,e,f,g,h,i,j) -> (a,to,c,lookup to ot, from,e,lookup from ot, f,g,h,i,j)) <$> prelim
+  return results
 
-
+{-
+-}
+      
+getAccountOwners :: AccountId -> Handler Text
+getAccountOwners aid = do
+  clubs <- runDB $ select $ from (\(InnerJoin club clubaccount) -> do
+    on $ club ^. ClubId ==. clubaccount ^. ClubAccountClub
+    where_ $ clubaccount ^. ClubAccountAccount ==. (val aid)
+    return $ club ^. ClubName)
+  users <- runDB $ select $ from (\(InnerJoin user useraccount) -> do
+    on $ user ^. UserId ==. useraccount ^. UserAccountUser
+    where_ $ useraccount ^. UserAccountAccount ==. (val aid)
+    return $ user ^. UserIdent)
+  return $ T.intercalate ", " $ 
+    ((\(Value a) -> a) <$> users) ++ ((\(Value a) -> a) <$> clubs)
