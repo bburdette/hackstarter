@@ -1,15 +1,16 @@
 {-# LANGUAGE TupleSections, OverloadedStrings #-}
 module Handler.Users where
 
-import Import
+import Import hiding ((==.), (!=.), (||.))
+import Database.Esqueleto
+import qualified Database.Persist as P
 import Permissions
-import qualified Database.Esqueleto      as E
-import           Database.Esqueleto      ((^.))
 
 getUsersAdminR :: Handler Html
 getUsersAdminR = do
-  users <- runDB $ E.select 
-    $ E.from $ \user -> do 
+  users <- runDB $ select 
+    $ from $ \user -> do 
+      orderBy [asc $ user ^. UserName] 
       return 
         ( user ^. UserId,
           user ^. UserIdent, 
@@ -21,7 +22,7 @@ getUsersAdminR = do
 
 getUsersNadminR :: Handler Html
 getUsersNadminR = do
-  users <- runDB $ selectList [] [] 
+  users <- runDB $ P.selectList [] [(P.Asc UserName)] 
   defaultLayout $ do
     aDomId <- newIdent
     $(widgetFile "users_ro")

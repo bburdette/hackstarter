@@ -1,12 +1,12 @@
 <h3> _{MsgHackerSpace} Hackers 
 <table> 
   <tr>
-    <th> User ID
     <th> Name
-  $forall (E.Value usrId, E.Value usrident, E.Value usrName) <- users
+    <th> User ID
+  $forall (Value usrId, Value usrident, Value usrName) <- users
     <tr> 
-      <td> <a href=@{UserR usrId}> #{usrident} 
       <td> #{usrName} 
+      <td> <a href=@{UserR usrId}> #{usrident} 
 
 <br>
 <a href=@{AddUserR}> Add a user

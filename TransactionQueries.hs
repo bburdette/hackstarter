@@ -171,14 +171,10 @@ getAccountInternals aid = do
       toaccts = (\(_,_,_,a,_,_,_,_,_,_) -> a) <$> prelim
       allaccts = Set.toList $ Set.fromList $ fromaccts ++ toaccts
   ownertext <- mapM getAccountOwners allaccts 
-  
   let ot = zip allaccts ownertext
       results = (\(a,to,c,from,e,f,g,h,i,j) -> (a,to,c,lookup to ot, from,e,lookup from ot, f,g,h,i,j)) <$> prelim
   return results
 
-{-
--}
-      
 getAccountOwners :: AccountId -> Handler Text
 getAccountOwners aid = do
   clubs <- runDB $ select $ from (\(InnerJoin club clubaccount) -> do
