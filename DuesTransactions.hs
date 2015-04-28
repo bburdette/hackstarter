@@ -13,9 +13,18 @@ import           Database.Esqueleto      ((^.))
 data DuesEntry = DuesEntry {
   date :: UTCTime,
   amount :: Centi,
-  balance :: Centi
+  balance :: Centi,
+  manual :: Bool
   }
   deriving Show
+
+-- transactions to/from the user dues account.
+-- atForDues=True if transaction is a manual dues transaction.
+data AcctTrans = AcctTrans {
+  atDate :: UTCTime,
+  atAmount :: Centi,
+  atForDues :: Bool
+  }
 
 getDuesRates :: ClubId -> Handler [Centi] 
 getDuesRates cid = do
@@ -30,43 +39,56 @@ getDuesRates cid = do
 
 -- assuming transactions are in ascending order by time.
 -- assuming all these are FOR dues
-calcDues :: [(UTCTime, Centi)] -> [Centi] -> [DuesEntry]
+calcDues :: [AcctTrans] -> [Centi] -> [DuesEntry]
 calcDues transactions duesrates = 
   makeDues (filter ((<) 0) (sort duesrates)) Nothing 0 transactions
 
-makeDues :: [Centi] -> (Maybe (UTCTime, Centi)) -> Centi -> [(UTCTime, Centi)] -> [DuesEntry]
--- if no more transactions, we're done making dues entries.
+-- makeDues duesrates lastDuesTransaction balance transactions -> dues entries.
+makeDues :: [Centi] -> (Maybe (UTCTime, Centi)) -> Centi -> [AcctTrans] -> [DuesEntry]
+-- if no more transactions and no previous transactions, we're done making dues entries.
 makeDues _ Nothing _ [] = []
-makeDues drs (Just (time,amt)) bal [] = 
-  if (bal >= amt)
-    then let nexttime = addMonths time 1 
-             newbal = bal - amt in 
-      (DuesEntry nexttime amt newbal) : 
+-- AcctTrans list is empty - no more transactions.  make more transactions as long as 
+-- we have a positive balance.
+makeDues drs (Just (time, amt)) bal [] = 
+  case (bal >= amt) of 
+    True -> 
+      let nexttime = addMonths time 1 
+          newbal = bal - amt in 
+      (DuesEntry nexttime amt newbal False) : 
         (makeDues drs (Just (nexttime, amt)) newbal [])
-    else []
+    False -> []
+-- no previous dues transaction.
 -- add transactions until the balance is >= one of the dues rates.  that's our initial
 -- dues rate, and dues transaction datetime.
-makeDues duesrates Nothing argbalance ((time,amt):rest) = 
-  let balance = argbalance + amt
+makeDues duesrates Nothing argbalance (acctTrans:rest) = 
+  let amt = (atAmount acctTrans)
+      time = (atDate acctTrans)
+      balance = argbalance + amt
       rates = takeWhile ((>=) balance) duesrates in 
   case rates of 
     [] -> makeDues duesrates Nothing (balance + amt) rest
     ratez -> let rate = last ratez 
                  newbal = balance - rate in 
-      (DuesEntry time rate newbal) : 
+      (DuesEntry time rate newbal False) : 
          makeDues duesrates (Just (time, rate)) newbal rest
-makeDues duesrates (Just (lasttime, lastrate)) balance ((time,amt):rest) = 
-  let nextdate = addMonths lasttime 2 in
-  if (time > nextdate) 
-    then makeDues duesrates (Just ((addMonths lasttime 1), lastrate)) balance ((time,amt):rest)
-    else let
-      newbalance = balance + amt
-      rate = if (elem amt duesrates) then amt else lastrate
+-- there is a previous dues transaction.  
+makeDues duesrates (Just (lasttime, lastrate)) balance ((AcctTrans time amt fordues):rest) = 
+  let nextdate = addMonths lasttime 2 in  -- this is how long before dues payment is missed.
+  if (time > nextdate)
+    -- skip making a dues transaction this time. its a gap in membership.
+    -- pass an updated 'pretend' last dues datetime though, so that if the balance goes positive
+    -- they start at the same day/time as before, but different month.
+    then makeDues duesrates (Just ((addMonths lasttime 1), lastrate)) balance ((AcctTrans time amt fordues):rest)
+    else 
+      -- we're still within the nextdate time.  update the balance and check whether there's enough 
+      -- balance for dues.
+      let newbalance = balance + amt
+          rate = if (elem amt duesrates) then amt else lastrate
       in
       if newbalance >= rate
         then let ddate = addMonths lasttime 1 
                  nbal = newbalance - rate in 
-          (DuesEntry ddate rate nbal) : makeDues duesrates (Just (ddate, rate)) nbal rest 
+           (DuesEntry ddate rate nbal False) : makeDues duesrates (Just (ddate, rate)) nbal rest 
         else makeDues duesrates (Just (lasttime, rate)) newbalance rest 
 
 addMonths :: UTCTime -> Integer -> UTCTime

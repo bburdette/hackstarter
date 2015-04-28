@@ -13,8 +13,8 @@ import Data.Time.Clock
 -- import Data.Time.Calendar
 import Util
 
-toEzTrans :: (PaypalId, AccountId, Text, UserId, Text, UTCTime, Centi, Bool) -> (UTCTime, Centi)
-toEzTrans (_,_,_,_,_,time,amt,_) = (time,amt) 
+toAcctTrans :: (PaypalId, AccountId, Text, UserId, Text, UTCTime, Centi, Bool) -> AcctTrans 
+toAcctTrans (_,_,_,_,_,time,amt,_) = AcctTrans time amt False
 
 data Meh = Meh 
   {
@@ -31,11 +31,11 @@ getAccountDuesR aid = do
   acct <- unMaybeMsg mbaccount "account not found"
   drs <- getDuesRates (accountClub acct) 
   ppi <- getAccountPaypalInternal aid
-  let dues = calcDues (toEzTrans <$> ppi) drs
+  let dues = calcDues (toAcctTrans <$> ppi) drs
       merged = L.sortBy sortftn ((Left <$> ppi) ++ (Right <$> dues))
       sortftn a b = compare (edate a) (edate b) 
-      edate (Left (_,_,_,_,_,dt,_,_)) = dt
-      edate (Right (DuesEntry dt _ _)) = dt 
+      edate (Left (_,_,_,_,_,dt,_,_)) = dt :: UTCTime
+      edate (Right (DuesEntry dt _ _ _)) = dt :: UTCTime 
   (okform,enc) <- generateFormPost mehForm
   defaultLayout $ do [whamlet|
     account dues
@@ -50,14 +50,16 @@ getAccountDuesR aid = do
         <th> amount
         <th> amount
         <th> balance
+        <th> manual
       $forall a <- merged
         $case a
-          $of Right (DuesEntry date amount balance)
+          $of Right (DuesEntry date amount balance manual)
             <tr>
               <td> #{ show date } 
               <td> 
               <td> #{ show amount } 
               <td> #{ show balance } 
+              <td> #{ show manual } 
           $of Left (_,_,_,_,_,date,amount,_)
             <tr>
               <td> #{ show date }
@@ -91,7 +93,7 @@ postAccountDuesR aid = do
       -- create dues recs. 
       drs <- getDuesRates (accountClub acct) 
       ppi <- getAccountPaypalInternal aid
-      let dues = calcDues (toEzTrans <$> ppi) drs
+      let dues = calcDues (toAcctTrans <$> ppi) drs
           internals = (makeInternal logid aid duesacct) <$> dues
       -- create internals from the dues recs.
       mapM (\internal -> runDB $ insert internal) internals
@@ -99,13 +101,13 @@ postAccountDuesR aid = do
     _ -> error "form error"
 
 makeInternal :: UserId -> AccountId -> AccountId -> DuesEntry -> Internal
-makeInternal creator fromacct toacct (DuesEntry date amount balance) = 
+makeInternal creator fromacct toacct (DuesEntry date amount balance manual) = 
   Internal { 
     internalFromaccount = fromacct,
     internalToaccount = toacct,
     internalCreator = creator,
     internalDate = date,
     internalAmount = amount,
-    internalManual = False }
+    internalManual = manual } 
 
 
