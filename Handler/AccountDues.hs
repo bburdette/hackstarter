@@ -7,7 +7,8 @@ import DuesTransactions
 import TransactionQueries 
 import Data.Fixed
 import qualified Data.Text as T
--- import Data.Maybe
+import Control.Monad
+--import qualified Data.Maybe as M
 import qualified Data.List as L
 import Data.Time.Clock
 -- import Data.Time.Calendar
@@ -31,13 +32,21 @@ getAccountDuesR aid = do
   acct <- unMaybeMsg mbaccount "account not found"
   drs <- getDuesRates (accountClub acct) 
   ppi <- getAccountPaypalInternal aid
-  let dues = calcDues (toAcctTrans <$> ppi) drs
-      merged = L.sortBy sortftn ((Left <$> ppi) ++ (Right <$> dues))
+  mbclub <- runDB $ get (accountClub acct)
+  clubduesacct <- unMaybeMsg (join (clubDuesaccount <$> mbclub)) "club dues account not found"
+  allint <- getAccountInternalsFromTo aid clubduesacct
+  -- calculate dues transactions.
+  let intdues = (\(a,b,c) -> AcctTrans a b c) <$> filter (\(_,_,manual) -> manual) allint 
+      alldues = L.sortBy (\a b -> compare (atDate a) (atDate b)) 
+                         (intdues ++ (toAcctTrans <$> ppi))
+      dues = calcDues alldues drs
+  let merged = L.sortBy sortftn ((Left <$> ppi) ++ (Right <$> dues))
       sortftn a b = compare (edate a) (edate b) 
       edate (Left (_,_,_,_,_,dt,_,_)) = dt :: UTCTime
       edate (Right (DuesEntry dt _ _ _)) = dt :: UTCTime 
   (okform,enc) <- generateFormPost mehForm
   defaultLayout $ do [whamlet|
+    #{ show allint }
     account dues
     <table> 
       <tr>

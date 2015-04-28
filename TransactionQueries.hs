@@ -1,6 +1,6 @@
 module TransactionQueries where
  
-import Import hiding ((==.), (!=.), (||.))
+import Import hiding ((==.), (!=.), (||.), (&&.))
 import Database.Esqueleto;
 --import qualified Database.Persist as P
 import Data.Fixed
@@ -174,6 +174,19 @@ getAccountInternals aid = do
   let ot = zip allaccts ownertext
       results = (\(a,to,c,from,e,f,g,h,i,j) -> (a,to,c,lookup to ot, from,e,lookup from ot, f,g,h,i,j)) <$> prelim
   return results
+
+-- get transactions from one internal account to another, just the date, amount, and manual flag.
+getAccountInternalsFromTo :: AccountId -> AccountId -> Handler [(UTCTime, Centi, Bool)]
+getAccountInternalsFromTo fromaid toaid = do 
+  internals <- runDB $ select $ from $ 
+    \internal -> do
+      where_ $ internal ^. InternalFromaccount ==. (val fromaid)
+        &&. internal ^. InternalToaccount ==. (val toaid) 
+      orderBy [asc $ internal ^. InternalDate]
+      return (internal ^. InternalDate,
+              internal ^. InternalAmount,
+              internal ^. InternalManual)
+  return $ (\(Value a, Value b, Value c) -> (a,b,c)) <$> internals 
 
 getAccountOwners :: AccountId -> Handler Text
 getAccountOwners aid = do
