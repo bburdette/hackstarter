@@ -49,8 +49,6 @@ getAccountDuesR aid = do
       edate (Right (DuesEntry dt _ _ _)) = dt :: UTCTime 
   (okform,enc) <- generateFormPost mehForm
   defaultLayout $ do [whamlet|
-    <br> #{ show allint }
-    <br> #{ show alltrans }
     <br> account dues
     <table> 
       <tr>
