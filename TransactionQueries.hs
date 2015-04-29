@@ -175,18 +175,22 @@ getAccountInternals aid = do
       results = (\(a,to,c,from,e,f,g,h,i,j) -> (a,to,c,lookup to ot, from,e,lookup from ot, f,g,h,i,j)) <$> prelim
   return results
 
--- get transactions from one internal account to another, just the date, amount, and manual flag.
+-- get only manual transactions from/to fromaid.
+-- mark the ones to toaid with true. 
 getAccountInternalsFromTo :: AccountId -> AccountId -> Handler [(UTCTime, Centi, Bool)]
 getAccountInternalsFromTo fromaid toaid = do 
   internals <- runDB $ select $ from $ 
     \internal -> do
-      where_ $ internal ^. InternalFromaccount ==. (val fromaid)
-        &&. internal ^. InternalToaccount ==. (val toaid) 
+      where_ $ (internal ^. InternalFromaccount ==. (val fromaid)
+           ||. internal ^. InternalToaccount ==. (val fromaid))
+           &&. internal ^. InternalManual ==. (val True) 
       orderBy [asc $ internal ^. InternalDate]
-      return (internal ^. InternalDate,
+      return (internal ^. InternalFromaccount ==. (val fromaid),
+              internal ^. InternalDate,
               internal ^. InternalAmount,
-              internal ^. InternalManual)
-  return $ (\(Value a, Value b, Value c) -> (a,b,c)) <$> internals 
+              internal ^. InternalToaccount ==. (val toaid))
+  return $ (\(Value f, Value a, Value b, Value c) -> (a,inv b f,c)) <$> internals 
+    where inv num bool = if bool then -num else num
 
 getAccountOwners :: AccountId -> Handler Text
 getAccountOwners aid = do

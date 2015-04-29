@@ -25,6 +25,7 @@ data AcctTrans = AcctTrans {
   atAmount :: Centi,
   atForDues :: Bool
   }
+  deriving Show
 
 getDuesRates :: ClubId -> Handler [Centi] 
 getDuesRates cid = do
@@ -86,9 +87,10 @@ makeDues duesrates (Just (lasttime, lastrate)) balance ((AcctTrans time amt ford
   if fordues
     then 
       -- make manual dues transation, adjust balance.
-      let newbal = balance - amt in  -- REVERSE SIGN HERE?  MAKE DUES AMTS NEGATIVE?
-      (DuesEntry time amt newbal True) : 
-        makeDues duesrates (Just (time, amt)) newbal rest
+      let mamt = - amt   -- manual dues amts are negative! 
+          newbal = balance - mamt in  
+      (DuesEntry time mamt newbal True) : 
+        makeDues duesrates (Just (time, - mamt)) newbal rest
     else
       -- add to the balance as normal.    
       let nextdate = addMonths lasttime 2 in  -- this is how long before dues payment is missed.

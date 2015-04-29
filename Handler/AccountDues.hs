@@ -33,21 +33,25 @@ getAccountDuesR aid = do
   drs <- getDuesRates (accountClub acct) 
   ppi <- getAccountPaypalInternal aid
   mbclub <- runDB $ get (accountClub acct)
-  clubduesacct <- unMaybeMsg (join (clubDuesaccount <$> mbclub)) "club dues account not found"
+  clubduesacct <- unMaybeMsg (join (clubDuesaccount <$> mbclub)) 
+                             "club dues account not found"
   allint <- getAccountInternalsFromTo aid clubduesacct
   -- calculate dues transactions.
-  let intdues = (\(a,b,c) -> AcctTrans a b c) <$> filter (\(_,_,manual) -> manual) allint 
-      alldues = L.sortBy (\a b -> compare (atDate a) (atDate b)) 
-                         (intdues ++ (toAcctTrans <$> ppi))
-      dues = calcDues alldues drs
-  let merged = L.sortBy sortftn ((Left <$> ppi) ++ (Right <$> dues))
+  --let intdues = (\(a,b,c) -> AcctTrans a b c) <$> filter (\(_,_,manual) -> manual) allint 
+  let inttrans = (\(a,b,c) -> AcctTrans a b c) <$> allint 
+      alltrans = L.sortBy (\a b -> compare (atDate a) (atDate b)) 
+                         (inttrans ++ (toAcctTrans <$> ppi))
+      dues = calcDues alltrans drs
+  let merged = L.sortBy sortftn ((Left <$> nondues) ++ (Right <$> dues))
+      nondues = filter (\(AcctTrans _ _ fordues) -> not fordues) alltrans
       sortftn a b = compare (edate a) (edate b) 
-      edate (Left (_,_,_,_,_,dt,_,_)) = dt :: UTCTime
+      edate (Left (AcctTrans dt _ _)) = dt :: UTCTime
       edate (Right (DuesEntry dt _ _ _)) = dt :: UTCTime 
   (okform,enc) <- generateFormPost mehForm
   defaultLayout $ do [whamlet|
-    #{ show allint }
-    account dues
+    <br> #{ show allint }
+    <br> #{ show alltrans }
+    <br> account dues
     <table> 
       <tr>
         <th> 
@@ -69,7 +73,7 @@ getAccountDuesR aid = do
               <td> #{ show amount } 
               <td> #{ show balance } 
               <td> #{ show manual } 
-          $of Left (_,_,_,_,_,date,amount,_)
+          $of Left (AcctTrans date amount _)
             <tr>
               <td> #{ show date }
               <td> #{ show amount } 
