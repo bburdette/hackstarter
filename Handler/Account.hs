@@ -115,6 +115,8 @@ getAccountR aid = do
                 <td> #{show datetime}
                 <td> #{show amount} 
                 <td> #{show manual} 
+                $if manual  
+                  <td> <a href=@{DeleteInternalR id aid}> delete 
               <tr>
                 <td> #{ fromMaybe "" mbFromAccountOwners } 
                 <td> #{ fromMaybe "" mbToAccountOwners } 
@@ -135,7 +137,7 @@ getAccountR aid = do
                   <a href=@{UserR creatorid}> #{ creatorident }
                 <td> #{show datetime}
                 <td> #{show amount} 
-                <td> #{show manual} 
+                <td> #{show manual}
           <h3> paypal transactions
           <table class="low">
             <tr>

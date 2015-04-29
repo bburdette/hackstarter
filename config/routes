@@ -39,3 +39,4 @@
 /account/#AccountId AccountR GET POST
 /accountdues/#AccountId AccountDuesR GET POST
 /addinternal/#AccountId AddInternalR GET POST
+/deleteinternal/#InternalId/#AccountId DeleteInternalR GET

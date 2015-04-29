@@ -61,6 +61,7 @@ library
                      Handler.Account
                      Handler.AccountDues
                      Handler.AddInternal
+                     Handler.DeleteInternal
                      Permissions
 
     if flag(dev) || flag(library-only)
