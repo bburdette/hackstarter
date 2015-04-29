@@ -67,10 +67,10 @@ makeDues duesrates Nothing Nothing argbalance (acctTrans:rest) =
   if (atForDues acctTrans) 
     then
       -- make manual dues transation, adjust balance.
-      let amt = (atAmount acctTrans)
+      let amt = - (atAmount acctTrans)
           time = (atDate acctTrans)
           newbal = argbalance - amt in
-      (DuesEntry (atDate acctTrans) (atAmount acctTrans) newbal True) : 
+      (DuesEntry time amt newbal True) : 
         makeDues duesrates (Just time) (Just amt) newbal rest
     else
       -- add to balance, check that bal is >= one of the dues rates; choose the largest rate.
@@ -91,10 +91,10 @@ makeDues duesrates Nothing (Just lastrate) argbalance (acctTrans:rest) =
   if (atForDues acctTrans) 
     then
       -- make manual dues transation, adjust balance.
-      let amt = (atAmount acctTrans)
+      let amt = - (atAmount acctTrans)
           time = (atDate acctTrans)
           newbal = argbalance - amt in
-      (DuesEntry (atDate acctTrans) (atAmount acctTrans) newbal True) : 
+      (DuesEntry time amt newbal True) : 
         makeDues duesrates (Just time) (Just amt) newbal rest
     else
       -- add to balance, check that bal is >= one of the dues rates; choose the largest rate.
