@@ -9,6 +9,7 @@ import Data.Time.LocalTime
 import Database.Esqueleto
 import TransactionQueries
 import qualified Data.Text as T
+import Permissions
 
 data EditInternalForm = EditInternalForm {
   eifCreate :: Bool,
@@ -38,11 +39,11 @@ getEditInternalR aid iid = do
   choices <- getUserAccountChoices aid
   mbint <- runDB $ get iid
   int <- unMaybeMsg mbint "internal transaction not found"
-  let mbto = getIntTo int aid
-  (tf,tfaid) <- unMaybeMsg mbto "invalid transaction from/to"
+  let mbto = getIntFrom int aid
+  (from,tfaid) <- unMaybeMsg mbto "invalid transaction from/to"
   let eif = EditInternalForm {
     eifCreate = False,
-    eifTo = tf,
+    eifTo = from,  -- from aid is TO eifAccount
     eifAccount = tfaid,
     eifAmount = internalAmount int,
     eifDay = utctDay $ internalDate int,
@@ -58,12 +59,42 @@ getEditInternalR aid iid = do
     |]
     
 
-getIntTo :: Internal -> AccountId -> Maybe (Bool, AccountId)
-getIntTo int aid = 
+getIntFrom :: Internal -> AccountId -> Maybe (Bool, AccountId)
+getIntFrom int aid = 
   case (aid == (internalFromaccount int), aid == (internalToaccount int)) of 
-    (True,False) -> Just (False, (internalToaccount int))
-    (False,True) -> Just (True, (internalFromaccount int))
+    (True,False) -> Just (True, (internalToaccount int))
+    (False,True) -> Just (False, (internalFromaccount int))
     (_,_) -> Nothing
 
 postEditInternalR :: AccountId -> InternalId -> Handler Html
-postEditInternalR = error "Not yet implemented: postEditInternalR"
+postEditInternalR aid iid = do 
+  logid <- requireAuthId
+  requireAdmin logid
+  choices <- getUserAccountChoices aid
+  mbint <- runDB $ get iid
+  int <- unMaybeMsg mbint "internal transaction not found"
+  ((res,_),_) <- runFormPost $ 
+    editInternalForm (internalManual int) choices Nothing
+  case res of
+    FormSuccess eif ->
+      let mekint = Internal { 
+            internalFromaccount = 
+              if (eifTo eif) then aid else (eifAccount eif),
+            internalToaccount = 
+              if (eifTo eif) then (eifAccount eif) else aid,
+            internalCreator = logid,
+            internalDate = localTimeToUTC utc 
+              (LocalTime (eifDay eif) (eifTime eif)),
+            internalAmount = eifAmount eif,
+            internalManual = True
+            } in
+      if eifCreate eif
+        then do
+          _ <- runDB $ insert mekint
+          redirect $ AccountR aid
+        else do 
+          _ <- runDB $ repsert iid mekint
+          redirect $ AccountR aid
+    _ -> error "blah"
+
+ 

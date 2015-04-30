@@ -52,24 +52,6 @@ getAddInternalR aid = do
       <input type=submit value=ok>
     |] 
     
-
-{-
-data AddInternalForm = AddInternalForm {
-  aifToAccount :: AccountId,
-  aifAmount :: Centi,
-  aifDate :: Day,
-  aifTime :: TimeOfDay 
-  }
-Internal
-    fromaccount AccountId
-    toaccount AccountId
-    creator UserId
-    date UTCTime default=CURRENT_TIMESTAMP
-    amount Centi
-    manual Bool 
-Account
--}
-
 postAddInternalR :: AccountId -> Handler Html
 postAddInternalR aid = do
   login <- requireAuthId  
