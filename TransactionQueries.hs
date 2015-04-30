@@ -204,3 +204,45 @@ getAccountOwners aid = do
     return $ user ^. UserIdent)
   return $ T.intercalate ", " $ 
     ((\(Value a) -> a) <$> users) ++ ((\(Value a) -> a) <$> clubs)
+
+getPaypal :: PaypalId -> Handler (Maybe (UTCTime, Centi, Centi, Text, Text, Text, Maybe Text, Maybe Text, UserId, Text))
+getPaypal pid = do
+  -- there should be a better way than repeating that sublist query!
+  paypals <- runDB $ select $ from $ 
+    \(InnerJoin (LeftOuterJoin (LeftOuterJoin paypal email) email2) usercreator) -> do 
+      on $ usercreator ^. UserId ==. paypal ^. PaypalCreator
+      on (paypal ^. PaypalToemail ==. email2 ?. EmailId)
+      on (paypal ^. PaypalFromemail ==. email ?. EmailId)
+      where_ $ paypal ^. PaypalId ==. (val pid)
+      return 
+        ( paypal ^. PaypalDate,
+          paypal ^. PaypalAmountGross,
+          paypal ^. PaypalAmountNet,
+          paypal ^. PaypalName,
+          paypal ^. PaypalDescription,
+          paypal ^. PaypalMemo,
+          email ?. EmailEmail,
+          email2 ?. EmailEmail,
+          paypal ^. PaypalCreator,
+          usercreator ^. UserIdent ) 
+  return $ MB.listToMaybe $ (\(Value a, Value b, Value c, Value d, Value e, Value f, Value g, Value h, Value i, Value j) -> (a,b,c,d,e,f,g,h,i,j)) <$> paypals
+
+getPaypalPaypalInternal :: PaypalId -> Handler [(PaypalId, AccountId, Text, UserId, Text, UTCTime, Centi, Bool)]
+getPaypalPaypalInternal pid = do 
+  ppis <- runDB $ select $ from $
+    \(InnerJoin (InnerJoin ppi user) account) -> do
+      on $ ppi ^. PaypalInternalToaccount ==. account ^. AccountId 
+      on $ ppi ^. PaypalInternalCreator ==. user ^. UserId
+      where_ $ ppi ^. PaypalInternalFrompaypal ==. (val pid)
+      orderBy [asc $ ppi ^. PaypalInternalDate]
+      return (ppi ^. PaypalInternalFrompaypal, 
+              ppi ^. PaypalInternalToaccount,
+              account ^. AccountName,
+              ppi ^. PaypalInternalCreator,
+              user ^. UserIdent,
+              ppi ^. PaypalInternalDate,
+              ppi ^. PaypalInternalAmount,
+              ppi ^. PaypalInternalManual)
+  return $ (\(Value a, Value b, Value c, Value d, Value e, Value f, Value g, Value h) -> (a,b,c,d,e,f,g,h)) <$> ppis 
+
+

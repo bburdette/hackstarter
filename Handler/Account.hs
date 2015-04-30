@@ -123,20 +123,19 @@ getAccountR aid = do
           <table class="low">
             <tr>
               <th> from paypal
-              <th> to account
-              <th> created by
-              <th> datetime
               <th> amount 
-              <th> manual
+              <th> created by
+              <th> manual?
             $forall (ppid, toacctid, toacctname, creatorid, creatorident, datetime, amount, manual) <- pis
               <tr>
-                <td> #{ show ppid }
-                <td> #{ toacctname } 
+                <td> <a href=@{PaypalDetailR ppid} > #{ show datetime } 
+                <td> #{show amount} 
                 <td> 
                   <a href=@{UserR creatorid}> #{ creatorident }
-                <td> #{show datetime}
-                <td> #{show amount} 
-                <td> #{show manual}
+                $if manual  
+                  <td> #{show manual} 
+                $else
+                  <td>
           <h3> paypal transactions
           <table class="low">
             <tr>
