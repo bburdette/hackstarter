@@ -63,6 +63,7 @@ library
                      Handler.AddInternal
                      Handler.DeleteInternal
                      Handler.PaypalDetail
+                     Handler.EditInternal
                      Permissions
 
     if flag(dev) || flag(library-only)

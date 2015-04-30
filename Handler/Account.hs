@@ -116,6 +116,7 @@ getAccountR aid = do
                 <td> #{show amount} 
                 $if manual  
                   <td> #{show manual} 
+                  <td> <a href=@{EditInternalR aid id}> edit 
                   <td> <a href=@{DeleteInternalR id aid}> delete 
                 $else
                   <td>

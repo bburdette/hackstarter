@@ -41,3 +41,4 @@
 /addinternal/#AccountId AddInternalR GET POST
 /deleteinternal/#InternalId/#AccountId DeleteInternalR GET
 /paypaldetail/#PaypalId PaypalDetailR GET POST
+/editinternal/#AccountId/#InternalId EditInternalR GET POST
