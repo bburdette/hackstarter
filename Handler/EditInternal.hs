@@ -19,9 +19,11 @@ data EditInternalForm = EditInternalForm {
   eifTime :: TimeOfDay
   }
 
-editInternalForm :: [(Text, AccountId)] -> Maybe EditInternalForm -> Form EditInternalForm 
-editInternalForm accountChoices mbeif = renderDivs $ EditInternalForm 
-  <$> areq (selectFieldList [("replace transaction" :: Text, False), ("create transaction", True)]) "" (eifCreate <$> mbeif)
+editInternalForm :: Bool -> [(Text, AccountId)] -> Maybe EditInternalForm -> Form EditInternalForm 
+editInternalForm allowReplace accountChoices mbeif = renderDivs $ EditInternalForm 
+  <$> (if allowReplace 
+        then areq (selectFieldList [("replace transaction" :: Text, False), ("create transaction", True)]) "" (eifCreate <$> mbeif)
+        else areq hiddenField "create transaction" (Just True))
   <*> areq (selectFieldList [("from" :: Text, False), ("to", True)]) "" (eifTo <$> mbeif)
   <*> areq (selectFieldList accountChoices) "account" (eifAccount <$> mbeif)
   <*> areq centiField "amount" (eifAmount <$> mbeif)
@@ -46,7 +48,8 @@ getEditInternalR aid iid = do
     eifDay = utctDay $ internalDate int,
     eifTime = (localTimeOfDay . (utcToLocalTime utc)) $ internalDate int
     }
-  (form,formenc) <- generateFormPost $ editInternalForm choices (Just eif)
+  (form,formenc) <- generateFormPost $ 
+    editInternalForm (internalManual int) choices (Just eif)
   defaultLayout $ do [whamlet|
     account: #{ accountName acct } 
     <form method=post enctype=#{formenc}>

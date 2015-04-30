@@ -116,10 +116,11 @@ getAccountR aid = do
                 <td> #{show amount} 
                 $if manual  
                   <td> #{show manual} 
-                  <td> <a href=@{EditInternalR aid id}> edit 
+                  <td> <a href=@{EditInternalR aid id}> copy/edit
                   <td> <a href=@{DeleteInternalR id aid}> delete 
                 $else
                   <td>
+                  <td> <a href=@{EditInternalR aid id}> copy 
           <h3> paypal->internal transactions
           <table class="low">
             <tr>
