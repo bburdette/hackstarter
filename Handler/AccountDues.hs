@@ -91,7 +91,7 @@ postAccountDuesR aid = do
   mbclub <- runDB $ P.get (accountClub acct)
   club <- unMaybeMsg mbclub "club not found"
   let mbduesacct = clubDuesaccount club
-  duesacct <- unMaybeMsg mbduesacct "club dues account not found!"
+  clubduesacct <- unMaybeMsg mbduesacct "club dues account not found!"
   ((res,_),_) <- runFormPost mehForm
   case res of 
     FormSuccess meh -> do 
@@ -100,16 +100,24 @@ postAccountDuesR aid = do
       _ <- runDB $ delete $ from (\internal -> do 
           where_ $ (internal ^. InternalFromaccount ==. (val aid))
             &&. (internal ^. InternalManual ==. (val False))
-            &&. (internal ^. InternalToaccount ==. (val duesacct)))
+            &&. (internal ^. InternalToaccount ==. (val clubduesacct)))
       -- create dues recs. 
       drs <- getDuesRates (accountClub acct) 
       ppi <- getAccountPaypalInternal aid
-      let dues = calcDues (toAcctTrans <$> ppi) drs
-          internals = (makeInternal logid aid duesacct) <$> dues
+      allint <- getAccountInternalsFromTo aid clubduesacct
+      -- calculate dues transactions.
+      --let intdues = (\(a,b,c) -> AcctTrans a b c) <$> filter (\(_,_,manual) -> manual) allint 
+      let inttrans = (\(a,b,c) -> AcctTrans a b c) <$> allint 
+          alltrans = L.sortBy (\a b -> compare (atDate a) (atDate b)) 
+                             (inttrans ++ (toAcctTrans <$> ppi))
+          dues = calcDues alltrans drs
+      -- let dues = calcDues (toAcctTrans <$> ppi) drs
+          internals = (makeInternal logid aid clubduesacct) <$> (filter (\x -> (not . manual) x) dues)
       -- create internals from the dues recs.
       mapM (\internal -> runDB $ insert internal) internals
       redirect $ AccountR aid
     _ -> error "form error"
+
 
 makeInternal :: UserId -> AccountId -> AccountId -> DuesEntry -> Internal
 makeInternal creator fromacct toacct (DuesEntry date amount balance manual) = 
