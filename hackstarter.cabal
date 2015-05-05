@@ -46,9 +46,6 @@ library
                      Handler.Utilities
                      Handler.Emails
                      Handler.AddEmail
-                     Handler.TransactionTypes
-                     Handler.TransactionType
-                     Handler.AddTransactionType
                      Handler.Paypal
                      Handler.Bank
                      Handler.Clubs

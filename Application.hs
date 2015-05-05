@@ -51,9 +51,6 @@ import Handler.AddPermission
 import Handler.Utilities
 import Handler.Emails
 import Handler.AddEmail
-import Handler.TransactionTypes
-import Handler.TransactionType
-import Handler.AddTransactionType
 import Handler.Paypal
 import Handler.Bank
 import Handler.Clubs

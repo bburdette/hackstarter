@@ -43,7 +43,6 @@ Paypal
     amountNet Centi
     creator UserId
     date UTCTime default=CURRENT_TIMESTAMP
-    -- type TransactionTypeId Maybe
     UniquePaypalTransactionId transactionid !force
 Bank
     transactionid Text
@@ -89,9 +88,6 @@ ProjectAccount
 ClubAccount
     club    ClubId
     account AccountId
-TransactionType  -- paypal, bank, bitcoin?  maybe better to be HCed types.
-    name Text
-    UniqueType name
 Permission
     name Text
     description Text Maybe
