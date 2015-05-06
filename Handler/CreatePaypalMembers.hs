@@ -163,5 +163,6 @@ addUser userrec clubid eid = do
   acctid <- runDB $ insert $ Account "dues" clubid
   useracct <-runDB $ insert $ UserAccount uid acctid
   accteml <- runDB $ insert $ AccountEmail acctid eid
+  _ <- runDB $ update eid [EmailUser =. Just uid]
   return uid
  
