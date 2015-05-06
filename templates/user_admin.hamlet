@@ -49,6 +49,8 @@
     <tr>
       <td>
         #{ emailEmail eml } 
+      <td>
+        <a href=@{DeleteEmailR eid}> delete
 
 <a href=@{AddEmailR userId}> add email
 

@@ -61,6 +61,7 @@ library
                      Handler.DeleteInternal
                      Handler.PaypalDetail
                      Handler.EditInternal
+                     Handler.DeleteEmail
                      Permissions
 
     if flag(dev) || flag(library-only)

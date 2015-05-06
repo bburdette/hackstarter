@@ -4,6 +4,7 @@ import Import
 import Permissions
 import UserForm
 import AccountEmailForm
+import Util
 import Data.Time.Clock
 import qualified Database.Esqueleto      as E
 import           Database.Esqueleto      ((^.))
@@ -122,6 +123,7 @@ getUserAdminR logid userId = do
   accounts <- getUserAccounts userId
   accountEmails <- getUserAccountEmails userId
   let acctemlgrid = accountEmailGrid accounts accountEmails
+  setSessUrlCurrent "edeller"
   case mbUser of 
     Nothing -> error "user id not found."
     Just user -> do 

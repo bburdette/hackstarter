@@ -2,12 +2,14 @@ module Handler.Emails where
 
 import Import
 import Permissions
+import Util
 
 getEmailsR :: Handler Html
 getEmailsR = do
   login <- requireAuthId
   requireAdmin login
   emails <- runDB $ selectList [] []
+  setSessUrlCurrent "edeller"
   defaultLayout [whamlet|
     <table>
       <tr> 
@@ -17,6 +19,8 @@ getEmailsR = do
         <tr>
           <td> 
             #{ emailEmail eml }
+          <td>
+            <a href=@{DeleteEmailR eid}> delete
     |]
 
 postEmailsR :: Handler Html

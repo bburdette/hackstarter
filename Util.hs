@@ -17,6 +17,25 @@ unMaybeMsg mba err =
     Just a -> return a
     Nothing -> error err
 
+setSessUrlCurrent :: MonadHandler m => Text -> m ()
+setSessUrlCurrent skey = do
+    route <- getCurrentRoute
+    case route of
+        Nothing -> return ()
+        Just url -> do
+          turl <- toTextUrl url
+          setSession skey turl
+
+redirectSessUrl :: (RedirectUrl (HandlerSite m) url, MonadHandler m)
+                => Text -- key in session where url was saved.
+                -> url -- ^ default destination if nothing in session
+                -> m a
+redirectSessUrl skey defaultUrl = do
+    mdest <- lookupSession skey 
+    deleteSession skey
+    maybe (redirect defaultUrl) redirect mdest
+
+
 centiField :: (Monad m, RenderMessage (HandlerSite m) FormMessage) => Field m Centi
 centiField = Field
     { fieldParse = parseHelper $ \s ->

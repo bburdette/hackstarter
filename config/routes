@@ -39,3 +39,4 @@
 /deleteinternal/#InternalId/#AccountId DeleteInternalR GET
 /paypaldetail/#PaypalId PaypalDetailR GET POST
 /editinternal/#AccountId/#InternalId EditInternalR GET POST
+/deleteemail/#EmailId DeleteEmailR GET
