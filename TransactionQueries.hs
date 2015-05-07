@@ -1,7 +1,7 @@
 module TransactionQueries where
  
 import Import hiding ((==.), (!=.), (||.), (&&.))
-import Database.Esqueleto;
+import Database.Esqueleto
 --import qualified Database.Persist as P
 import Data.Fixed
 import Data.Time.Clock
