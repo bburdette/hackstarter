@@ -233,8 +233,7 @@ postUserR uid =
               sav <- lookupPostParam "save"
               case (del, sav) of 
                 (Just _, _) -> do 
-                  res <- runDB $ delete uid
-                  defaultLayout [whamlet| record delete attempted: #{show res}|]
+                  redirect $ DeleteUserR uid
                 (_, Just _) -> do 
                   runDB $ replace uid user  
                   redirect UsersR
