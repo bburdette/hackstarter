@@ -6,19 +6,6 @@ import qualified Database.Persist as P
 import Permissions
 import Util
 
-{-
-getDeleteEmailR :: EmailId -> Handler Html
-getDeleteEmailR eid = do 
-  login <- requireAuthId
-  requireAdmin login
-  runDB $ P.delete eid
-  redirectSessUrl dellerSessKey HomeR
-
-    update $ (\email -> do
-      set email [ EmailUser =. nothing ]
-      where_ (email ^. EmailUser ==. (just (val uid))))
--}
-
 getDeleteUserR :: UserId -> Handler Html
 getDeleteUserR uid = do
   -- get user accounts.
@@ -51,7 +38,7 @@ getDeleteUserR uid = do
       |]
       
   {-
-  if only user on accounts, delete accounts.
+  if only 1 user on accounts, delete accounts.
   to delete accounts delete from:
     useraccount   
     paypal->internal and 
@@ -89,15 +76,6 @@ deleteAccount aid = do
       where_ (acct ^. AccountId ==. val aid)) 
   return ()
     
-{-
-deleteAccount :: AccountId -> Handler ()
-deleteAccount aid = do
-  runDB $ delete $ from (\uacct -> do where_ $ uacct ^. UserAccountAccount ==. val aid)
-  runDB $ delete $ from (\cacct -> do where_ $ cacct ^. ClubAccountAccount ==. val aid)
-  runDB $ delete $ from (\pacct -> do where_ $ pacct ^. ProjectAccountAccount ==. val aid)
-  return ()
--}
-
 
 getAccountOwners :: AccountId -> Handler [Text]
 getAccountOwners aid = do
