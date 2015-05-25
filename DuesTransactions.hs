@@ -30,7 +30,7 @@ data AcctTrans = AcctTrans {
 getDuesRates :: ClubId -> Handler [Centi] 
 getDuesRates cid = do
   drs <- runDB $ selectList [DuesRateClub ==. cid] []
-  return $ (\dre -> duesRateAmount $ entityVal dre) <$> drs
+  return $ duesRateAmount . entityVal <$> drs
 
 -- if we allowed paying any amount for dues, carrying over a balance and so forth, how would we determine the
 -- dues rates without programming them in manually?
@@ -42,18 +42,18 @@ getDuesRates cid = do
 -- assuming all these are FOR dues
 calcDues :: [AcctTrans] -> [Centi] -> [DuesEntry]
 calcDues transactions duesrates = 
-  makeDues (filter ((<) 0) (sort duesrates)) Nothing Nothing 0 transactions
+  makeDues (filter (0<) $ sort duesrates) Nothing Nothing 0 transactions
 
 -- makeDues duesrates lastmonthduesdate lastduesamount balance transactions -> dues entries.
 -- the lastmonthduesdate is cleared after a gap in membership.
 makeDues :: [Centi] -> Maybe UTCTime -> Maybe Centi -> Centi -> [AcctTrans] -> [DuesEntry]
 -- if no more transactions and no previous month dues transaction, we're done making dues entries.
 makeDues _ Nothing _ _ [] = []
-makeDues _ (Just _) Nothing _ [] = []  -- should never happen!
+makeDues _ (Just _) Nothing _ [] = error "makeDues: unreachable!"  -- should never happen!
 -- AcctTrans list is empty - no more transactions.  make more transactions as long as 
 -- we have a positive balance.
 makeDues drs (Just time) (Just amt) bal [] = 
-  case (bal >= amt) of 
+  case bal >= amt of 
     True -> 
       let nexttime = addMonths time 1 
           newbal = bal - amt in 
@@ -64,7 +64,7 @@ makeDues drs (Just time) (Just amt) bal [] =
 -- add transactions until the balance is >= one of the dues rates, or there's a manual 
 -- dues transaction.  that's our initial dues rate, and dues transaction datetime.
 makeDues duesrates Nothing Nothing argbalance (acctTrans:rest) = 
-  if (atForDues acctTrans) 
+  if atForDues acctTrans
     then
       -- make manual dues transation, adjust balance.
       let amt = - (atAmount acctTrans)
@@ -98,8 +98,8 @@ makeDues duesrates Nothing (Just lastrate) argbalance (acctTrans:rest) =
         makeDues duesrates (Just time) (Just amt) newbal rest
     else
       -- add to balance, check that bal is >= one of the dues rates; choose the largest rate.
-      let amt = (atAmount acctTrans)
-          time = (atDate acctTrans)
+      let amt = atAmount acctTrans
+          time = atDate acctTrans
           balance = argbalance + amt in
           -- rates = takeWhile ((>=) balance) duesrates in 
       if (balance < lastrate)
@@ -147,9 +147,10 @@ addMonths :: UTCTime -> Integer -> UTCTime
 addMonths start months =
   start { utctDay = addGregorianMonthsClip months (utctDay start) } 
 
+-- (i would have tried to implement this with 'splitAt' and 'findIndex')
 splitOn :: (a -> Bool) -> [a] -> ([a], [a])
 splitOn cond lst = 
-  spuliton cond [] lst 
+  spuliton cond [] lst
 
 spuliton :: (a -> Bool) -> [a] -> [a] -> ([a],[a])
 spuliton _ [] [] = ([], [])
