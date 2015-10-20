@@ -1,9 +1,9 @@
 hackstarter
 ===========
 
-Like kickstarter but for a hackerspace.  Propose projects, contribute money, time, parts, resources.  
+A sort of membership/dues manager for a hackerspace.  Not ready for prime time!
 
-This is nowhere near ready for use!    
+Originally was going to be like kickstarter but for a hackerspace.  Propose projects, contribute money, time, parts, resources.  May put some of those features in later, particularly the part about funding projects.  
 
-As of 2014/11 mainly work is going in to a club dues/donations accounting system, since we need that first.   
+
 
